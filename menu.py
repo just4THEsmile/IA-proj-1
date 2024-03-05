@@ -19,45 +19,67 @@ RED = (255, 0, 0)
 # Font
 FONT = pygame.font.SysFont('arial', 60)
 
-# Menu options
-menu_options = ['Start Game', 'Quit']
-options_functions = {}  # This will later be used to map options to functions
-
+# Function to draw text on the screen
 def draw_text(text, font, color, surface, y):
-    textobj = font.render(text, 1, color)
+    textobj = font.render(text, True, color)  # Use True for antialiasing
     textrect = textobj.get_rect(center=(WIDTH / 2, y))
     surface.blit(textobj, textrect)
 
-def main_menu():
+def game_mode_selection():
+    game_modes = ["Human vs Human", "Human vs Computer", "Computer vs Computer"]
+    menu_height = len(game_modes) * 100
+    start_y = (HEIGHT - menu_height) // 2
     while True:
         WINDOW.fill(BLACK)
-
         mx, my = pygame.mouse.get_pos()
 
-        # Draw menu options
+        for i, mode in enumerate(game_modes):
+            mode_y_position = start_y + i * 100
+            if 100 < mx < WIDTH - 100 and mode_y_position < my < mode_y_position + 50:
+                draw_text(mode, FONT, GREEN, WINDOW, mode_y_position)
+                if pygame.mouse.get_pressed()[0]:  
+                    pygame.event.wait()  
+                    board = logic.Board()  
+                    running = True
+                    while running:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            elif event.type == pygame.MOUSEBUTTONDOWN:
+                                pass
+                        
+                        board.draw(WINDOW)  
+                        pygame.display.flip()
+                    return  
+            else:
+                draw_text(mode, FONT, WHITE, WINDOW, mode_y_position)
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+# Main menu function
+def main_menu():
+    menu_options = ["Start Game", "Quit"]
+    menu_height = len(menu_options) * 100
+    start_y = (HEIGHT - menu_height) // 2
+    while True:
+        WINDOW.fill(BLACK)
+        mx, my = pygame.mouse.get_pos()
+
         for i, option in enumerate(menu_options):
-            menu_y_position = 150 + i * 100
+            menu_y_position = start_y + i * 100
             if 100 < mx < WIDTH - 100 and menu_y_position < my < menu_y_position + 50:
                 draw_text(option, FONT, GREEN, WINDOW, menu_y_position)
-                if pygame.mouse.get_pressed()[0]:
-                    if option == "Start Game":
-                        board = logic.Board()
-                        running = True
-                        while running:
-                            # Handle events
-                            for event in pygame.event.get():
-                                if event.type == pygame.QUIT:
-                                    running = False
-                                elif event.type == pygame.MOUSEBUTTONDOWN:
-                                    pass
-
-                            
-                            
-                            board.draw()
-                            pygame.display.flip()
-                    elif option == "Quit":
-                        pygame.quit()
-                        sys.exit()
+                if pygame.mouse.get_pressed()[0] and option == "Start Game":
+                    pygame.event.wait()
+                    game_mode_selection() 
+                elif pygame.mouse.get_pressed()[0] and option == "Quit":
+                    pygame.quit()
+                    sys.exit()
             else:
                 draw_text(option, FONT, WHITE, WINDOW, menu_y_position)
 
@@ -67,5 +89,5 @@ def main_menu():
                 pygame.quit()
                 sys.exit()
 
-if __name__ == '__main__':
-    main_menu()
+# Start the main menu
+main_menu()
