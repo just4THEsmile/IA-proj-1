@@ -219,7 +219,7 @@ def is_neighbour(board,stone1,stone2,sizeofside=5):
             return (dy==0 and abs(dx)==1) or (dy==1 and dx==1) or (dy==-1 and dx==-1)
         elif fromx >sizeofside and tox>sizeofside:
             return (dy==0 and abs(dx)==1) or (dy==1 and dx==-1) or (dy==-1 and dx==1)
-        else:
+        else:   
             if(fromx<tox):
                 return (dy==0 and abs(dx)==1) or (dy==-1 and dx==1)
             else:
