@@ -41,7 +41,7 @@ class Board:
         """
         if self.selected_piece and is_valid_move(self.board, self.selected_piece, destination) and self.selected_piece.blocked==False:
             self.board[destination] = self.selected_piece
-            del self.board[self.selected_piece.gameposition]
+            self.board[self.selected_piece.gameposition] = None
             self.selected_piece.gameposition = destination
             self.selected_piece.position = self.get_position_from_gameposition(destination)
             self.selected_piece = None
@@ -126,6 +126,7 @@ def initialize_board():
     Initialize the board state with stones placed according to the game rules.
     """
     board = {}
+    print(type(board))
     for row in range(9):
         for col in range(get_col_number(row)):
             x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row) * draw.horizontal_distance) / 2
