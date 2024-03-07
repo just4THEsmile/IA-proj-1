@@ -39,6 +39,9 @@ class Board:
         """
         Move a piece to the specified destination if the move is valid.
         """
+        print("movement")
+        print(is_line_of_color(self.board,self.selected_piece.gameposition,destination,self.selected_piece.color))
+        print(self.selected_piece.blocked==False)
         if self.selected_piece and is_valid_move(self.board, self.selected_piece, destination) and self.selected_piece.blocked==False:
             self.board[destination] = self.selected_piece
             self.board[self.selected_piece.gameposition] = None
@@ -46,6 +49,18 @@ class Board:
             self.selected_piece.position = self.get_position_from_gameposition(destination)
             self.selected_piece = None
             self.current_player = draw.RED if self.current_player == draw.BLUE else draw.BLUE
+
+        elif self.selected_piece and is_line_of_color(self.board,self.selected_piece.gameposition,destination,self.selected_piece.color) and is_straight_line(self.selected_piece.gameposition,destination ) and self.selected_piece.blocked==False:
+            print("jumping")
+            if check_piece_color(self.board,destination,self.selected_piece.color)==False:
+                if self.board[destination]!=None:
+                    self.board[destination] = self.selected_piece
+                    self.board[self.selected_piece.gameposition] = None
+                    self.selected_piece.gameposition = destination
+                    self.selected_piece.position = self.get_position_from_gameposition(destination)
+                    self.selected_piece = None
+                    self.current_player = draw.RED if self.current_player == draw.BLUE else draw.BLUE
+                
         else:
             print("Invalid move")
 
@@ -165,7 +180,10 @@ def is_valid_move(board, stone, destination,sizeofside=5):
         return False
     print((fromx,fromy),"to",(tox,toy))
     print(oddr_to_cube((fromx,fromy)),"to",oddr_to_cube((tox,toy)))
-
+    """
+    print(is_straight_line((fromx,fromy),(tox,toy)))
+    print("line")
+    print(is_line_of_color(board,(fromx,fromy),(tox,toy),stone.color))"""
 
     dx = tox - fromx
     dy = toy - fromy
@@ -274,3 +292,171 @@ def cube_to_oddr(cube):
     col = cube[0] + (cube[2] - (cube[2] & 1)) // 2
     row = cube[2]
     return (row, col)
+
+
+def is_straight_line(pos1, pos2,sizeofside=5):
+    """
+    Check if two positions form a straight line in a hexagonal grid.
+    pos1 and pos2 are tuples representing the axial coordinates of the positions.
+    """
+    # Convert the axial coordinates to cube coordinates
+    (fromx,fromy)=pos1
+    (tox,toy)=pos2
+    realsize=sizeofside-1
+    dx = tox - fromx
+    dy = toy - fromy
+    #same row
+    if fromx==tox:
+        return True
+    else:
+        if fromx <=(sizeofside-1) and tox<=(sizeofside-1):
+            return (dy==0) or (dy==dx)
+        elif fromx >(sizeofside-1) and tox>(sizeofside-1):
+            return (dy==0) or (dy==-dx)
+        else:
+            if(fromx<tox):
+                print("here")
+                print(dy,dx)
+                return (dy==(realsize-fromx)) or (dy==-(tox-realsize))
+            else:
+                print("ffhere")
+                print(dy,dx)
+                print(str(fromy-realsize))
+                return (dy==-(realsize-tox)) or (dy==(fromx-realsize))
+
+def is_valid_piece(board,pos,sizeofside=5):
+    (x,y)=pos
+    if x<0 or x>=9:
+        return False
+    if y<0 or y>=get_col_number(x):
+        return False
+    if board[(x,y)]==None:
+        return False
+    return True
+
+def check_piece_color(board,pos,color):
+    if is_valid_piece(board,pos):
+        return board[pos].color==color
+    return False
+
+def is_line_of_color(board, pos1, pos2, color,sizeofside=5):
+        # Convert the axial coordinates to cube coordinates
+    (fromx,fromy)=pos1
+    (tox,toy)=pos2
+    realsize=sizeofside-1
+    dx = tox - fromx
+    dy = toy - fromy
+    #same row
+    if fromx==tox:
+        val1=True
+        val2=True
+        for i in range(1,abs(dy)):
+            if check_piece_color(board,(fromx,fromy+i),color)==False:
+                val1=False
+
+            if check_piece_color(board,(fromx,fromy-i),color)==False:
+                val2=False
+
+        return val1 or val2
+    else:
+        if fromx <=(sizeofside-1) and tox<=(sizeofside-1):
+            val1=True
+            val2=True
+            val3=True
+            val4=True
+            for i in range(1,abs(dx)):
+                if check_piece_color(board,(fromx+i,fromy+i),color)==False:
+                    val1=False
+
+                if check_piece_color(board,(fromx-i,fromy-i),color)==False:
+                    val2=False    
+   
+                if check_piece_color(board,(fromx+i,fromy),color)==False:
+                    val3=False    
+
+                if check_piece_color(board,(fromx-i,fromy),color)==False:
+                    val4=False
+            print (val1 , val2 , val3 , val4)
+            return val1 or val2 or val3 or val4   
+            #return (dy==0) or (dy==dx)
+        elif fromx >(sizeofside-1) and tox>(sizeofside-1):
+            val1=True
+            val2=True
+            val3=True
+            val4=True
+            for i in range(1,abs(dx)):
+                if check_piece_color(board,(fromx+i,fromy),color)==False:
+                    val1=False
+
+                if check_piece_color(board,(fromx-i,fromy),color)==False:
+                    val2=False
+  
+                if check_piece_color(board,(fromx+i,fromy-i),color)==False:
+                    val3=False
+
+                if check_piece_color(board,(fromx-i,fromy+i),color)==False:
+                    val4=False
+
+            print (val1 , val2 , val3 , val4)
+            return val1 or val2 or val3 or val4
+            #return (dy==0) or (dy==-dx)
+        else:
+            if(fromx<tox):
+                print("here")
+                print(dy,dx)
+                val1=True
+                val2=True
+                for i in range(1,abs(dx)):
+                    if fromx+i<=realsize:
+                        if check_piece_color(board,(fromx+i,fromy+i),color)==False:
+                            val1=False
+
+                        if check_piece_color(board,(fromx+i,fromy),color)==False:
+                            val2=False
+
+                    else:
+                        if check_piece_color(board,(fromx+i,fromy+(realsize-fromx)),color)==False:
+                            val1=False
+
+                        if check_piece_color(board,(fromx-i,fromy-(fromx+i-realsize)),color)==False:  
+                            val2=False  
+ 
+                print (val1 , val2)             
+                return val1 or val2    
+                #return (dy==(realsize-fromx)) or (dy==-(tox-realsize))
+            else:
+                print("ffhere")
+                print(dy,dx)
+                print(str(fromy-realsize))
+                val1=True
+                val2=True
+                for i in range(1,abs(dx)):
+                    if fromx-i>=realsize:
+                        if check_piece_color(board,(fromx-i,fromy),color)==False: 
+                            val1=False
+
+                        if check_piece_color(board,(fromx-i,fromy+i),color)==False:
+                            val2=False
+
+                    else:
+                        if check_piece_color(board,(fromx-i,fromy-(i+fromx-realsize)),color)==False:
+                            val1=False
+
+                        if check_piece_color(board,(fromx-i,fromy+(fromx-realsize)),color)==False:
+                            val2=False    
+
+                print (val1 , val2)            
+                return val1 or val2           
+      
+                #return (dy==-(realsize-tox)) or (dy==(fromx-realsize))
+
+
+def axial_to_cube(pos):
+    """
+    Convert axial coordinates to cube coordinates.
+    pos is a tuple representing the axial coordinates of the position.
+    """
+    x = pos[0]
+    y = pos[1] - (pos[0] // 2)
+    z = -x - y
+    return (x, y, z)
