@@ -51,7 +51,7 @@ def main():
                 pass
 
         
-        
+        board.check_blocked()
         board.draw()
         pygame.display.flip()
 
