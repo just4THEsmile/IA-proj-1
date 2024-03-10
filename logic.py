@@ -66,7 +66,6 @@ class Board:
     
     #checks if the position has a piece of the color
     def check_pos_color(self,pos,color):
-        print(pos)
         if pos[0]<0 or pos[0]>8 or pos[1]<0 or pos[1]>=get_col_number(pos[0]):
             return False
         else:
