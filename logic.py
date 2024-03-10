@@ -30,37 +30,51 @@ class Finish_line:
         draw.draw_circle(x, y, draw.hex_size, self.color)
 
 class Board:
-    def __init__(self):
+    def __init__(self,sizeofside=5):
         self.board = initialize_board()
         self.current_player = draw.BLUE
         self.selected_piece = None
+        self.blocked_Red = []
+        self.blocked_Blue = []
+        self.red_pieces_number = sizeofside*2-1
+        self.blue_pieces_number = sizeofside*2-1
+
 
     def move_piece(self, destination):
         """
         Move a piece to the specified destination if the move is valid.
         """
         print("movement")
+        if(destination[0]<0 or destination[0]>8 or destination[1]<0 or destination[1]>=get_col_number(destination[0]) or (destination[0]==4 and destination[1]==0 and self.selected_piece.color!=draw.RED) or (destination[0]==4 and destination[1]==get_col_number(destination[0])-1 and self.selected_piece.color!=draw.BLUE)):
+            return False
+        if check_piece_color(self.board,destination,self.current_player)==False and  self.board[destination]!=None and type(self.board[destination])!=Finish_line:
+            return False
+        print(can_move(self.board,self.selected_piece.gameposition,destination,self.selected_piece.color))
         print(is_line_of_color(self.board,self.selected_piece.gameposition,destination,self.selected_piece.color))
         print(self.selected_piece.blocked==False)
-        if self.selected_piece and is_valid_move(self.board, self.selected_piece, destination) and self.selected_piece.blocked==False:
+        print("valid move")
+        if self.selected_piece and can_move(self.board,self.selected_piece.gameposition,destination,self.selected_piece.color) and self.selected_piece.blocked==False:
+            print("valid move")
+            if self.board[destination]!=None:
+                if self.board[destination].color==draw.RED:
+                    try:
+                        self.blocked_Red.remove(destination)
+                    except ValueError:
+                        pass
+                    self.red_pieces_number-=1
+                elif self.board[destination].color==draw.BLUE:
+                    try:
+                        self.blocked_Blue.remove(destination)
+                    except ValueError:
+                        pass
+                    self.blue_pieces_number-=1
             self.board[destination] = self.selected_piece
             self.board[self.selected_piece.gameposition] = None
-            self.selected_piece.gameposition = destination
-            self.selected_piece.position = self.get_position_from_gameposition(destination)
+            self.board[destination].gameposition = destination
+            self.board[destination].position = self.get_position_from_gameposition(destination)
             self.selected_piece = None
             self.current_player = draw.RED if self.current_player == draw.BLUE else draw.BLUE
-
-        elif self.selected_piece and is_line_of_color(self.board,self.selected_piece.gameposition,destination,self.selected_piece.color) and is_straight_line(self.selected_piece.gameposition,destination ) and self.selected_piece.blocked==False:
-            print("jumping")
-            if check_piece_color(self.board,destination,self.selected_piece.color)==False:
-                if self.board[destination]!=None:
-                    self.board[destination] = self.selected_piece
-                    self.board[self.selected_piece.gameposition] = None
-                    self.selected_piece.gameposition = destination
-                    self.selected_piece.position = self.get_position_from_gameposition(destination)
-                    self.selected_piece = None
-                    self.current_player = draw.RED if self.current_player == draw.BLUE else draw.BLUE
-                
+                     
         else:
             print("Invalid move")
 
@@ -75,15 +89,27 @@ class Board:
         """
         Check for blocked stones and update their status.
         """
-        # Implement logic to check for blocked stones and update their status
+        
         pass
 
     def check_win_conditions(self):
         """
         Check win conditions to determine if a player has won or if the game has ended in a stalemate.
         """
-        # Implement win condition checking logic
-        pass
+        if type(self.board[(4,0)])!=Finish_line:
+            print("Red wins")
+            return True
+        elif type(self.board[(4,get_col_number(4)-1)])!=Finish_line:
+            print("Blue wins")
+            return True
+        elif self.red_pieces_number==len(self.blocked_Red):
+            print("Blue wins")
+            return True
+        elif self.blue_pieces_number==len(self.blocked_Blue):
+            print("Red wins")
+            return True 
+        return False
+    
     def get_gameposition_at_position(self, position):
         x = position[0]
         y = position[1]
@@ -179,7 +205,9 @@ def is_valid_move(board, stone, destination,sizeofside=5):
     if(board[destination]!=None):
         return False
     print((fromx,fromy),"to",(tox,toy))
-    print(oddr_to_cube((fromx,fromy)),"to",oddr_to_cube((tox,toy)))
+    print(coord_to_cube((fromx,fromy)),"to",coord_to_cube((tox,toy)))
+    print(cube_to_coord(coord_to_cube((fromx,fromy))),"to",cube_to_coord(coord_to_cube((tox,toy))))
+    print()
     """
     print(is_straight_line((fromx,fromy),(tox,toy)))
     print("line")
@@ -451,12 +479,84 @@ def is_line_of_color(board, pos1, pos2, color,sizeofside=5):
                 #return (dy==-(realsize-tox)) or (dy==(fromx-realsize))
 
 
-def axial_to_cube(pos):
-    """
-    Convert axial coordinates to cube coordinates.
-    pos is a tuple representing the axial coordinates of the position.
-    """
-    x = pos[0]
-    y = pos[1] - (pos[0] // 2)
-    z = -x - y
-    return (x, y, z)
+def coord_to_cube(pos,sizeofside=5):
+    (x,y)=pos
+    realsize=sizeofside-1
+    yy=x-realsize
+    if x<=realsize:
+        xx=y-x
+        zz=-xx-yy
+    else:
+        xx=y-realsize
+        zz=-xx-yy
+
+
+
+
+    return (xx, yy, zz)
+
+def cube_to_coord(cube,sizeofside=5):
+    (x,y,z)=cube
+    realsize=sizeofside-1
+    if y<0:
+        xx=y+realsize
+        yy=xx+x
+    else:
+        xx=y+realsize
+        yy=realsize+x
+
+    return (xx,yy)
+
+def can_move(board,from_pos,to_pos,color,sizeofside=5):
+    (fromx,fromy,fromz)=coord_to_cube(from_pos)
+    (tox,toy,toz)=coord_to_cube(to_pos)
+    dx = tox - fromx
+    dy = toy - fromy
+    dz = toz - fromz
+    realsize=sizeofside-1
+    #check if the move is in line
+    if(dx==0 or dy==0 or dz==0):
+        #single distance movement
+        if(dx==1 or dy==1 or dz==1):
+            print(tox,toy,toz)
+            print(cube_to_coord((tox,toy,toz)))
+            print(board[cube_to_coord((tox,toy,toz))]==None )
+            if board[cube_to_coord((tox,toy,toz))]==None or (type(board[cube_to_coord((tox,toy,toz))])==Finish_line and board[cube_to_coord((tox,toy,toz))].color==color):
+                print("single")
+                print("single")
+                print("single")
+                print("single")
+                return True
+            return False
+        else:
+            if(dx>0):
+                xrange=range(fromx,tox)
+            else:
+                xrange=range(fromx,tox,-1)
+            if dy>0:
+                yrange=range(fromy,toy)
+            else:
+                yrange=range(fromy,toy,-1)    
+            if dz>0:
+                zrange=range(fromz,toz)
+            else:
+                zrange=range(fromz,toz,-1)    
+
+            if dx==0:
+                for i in range(1,abs(dy)):
+                    if check_piece_color(board,cube_to_coord((fromx,yrange[i],zrange[i])),color)==False:
+                        return False
+                return True    
+            elif dy==0:
+                for i in range(1,abs(dx)):
+                    if check_piece_color(board,cube_to_coord((xrange[i],fromy,zrange[i])),color)==False:
+                        return False
+                return True
+            elif dz==0:
+                for i in range(1,abs(dx)):
+                    if check_piece_color(board,cube_to_coord((xrange[i],yrange[i],fromz)),color)==False:
+                        return False
+                return True
+    return False
+
+    

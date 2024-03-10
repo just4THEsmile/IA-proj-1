@@ -22,6 +22,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif board.check_win_conditions():
+                running = False    
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if (board.selected_piece==None):
                     x, y = event.pos
