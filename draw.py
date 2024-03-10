@@ -15,6 +15,7 @@ WHITE = (255, 255, 255)
 BLACK = (50, 50, 50)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 
 def draw_hexagon(x, y, size, color):
     """
@@ -46,11 +47,17 @@ def draw_board(board):
         else:
             x, y = position
             draw_hexagon(x, y, hex_size, BLACK)
+        if(board.selected_piece!=None):
+            x, y = board.selected_piece.position
+            draw_hexagon_border(x, y, hex_size, YELLOW,2)
 
+def draw_hexagon_border(x, y, size, color,len):
+    points = []
+    for i in range(6):
+        angle_deg = 60 * i + 30
+        angle_rad = math.radians(angle_deg)
+        points.append((x + size * math.cos(angle_rad),
+                       y + size * math.sin(angle_rad)))
+    pygame.draw.polygon(WINDOW, color, points, len)
 
-    def draw(self):
-        # Draw stone on the board
-        x, y = self.position
-        draw_hexagon(x, y, hex_size, BLACK)
-        draw_circle(x, y, hex_size, self.color,)                  
 

@@ -1,6 +1,7 @@
 import pygame
 import logic
 import sys
+import gameloop
 
 # Initialize Pygame
 pygame.init()
@@ -37,9 +38,8 @@ def game_mode_selection():
             mode_y_position = start_y + i * 100
             if 100 < mx < WIDTH - 100 and mode_y_position < my < mode_y_position + 50:
                 draw_text(mode, FONT, GREEN, WINDOW, mode_y_position)
-                if pygame.mouse.get_pressed()[0]:  
+                if pygame.mouse.get_pressed()[0] and mode=="Human vs Human":  
                     pygame.event.wait()  
-                    board = logic.Board()  
                     running = True
                     while running:
                         for event in pygame.event.get():
@@ -48,9 +48,22 @@ def game_mode_selection():
                             elif event.type == pygame.MOUSEBUTTONDOWN:
                                 pass
                         
-                        board.draw(WINDOW)  
-                        pygame.display.flip()
+                            gameloop.game_pvp()
+                            main_menu()
                     return  
+                elif pygame.mouse.get_pressed()[0] and mode=="Human vs Computer":
+                    pygame.event.wait()  
+                    print("Human vs Computer")
+                    running = True
+                    while running:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            elif event.type == pygame.MOUSEBUTTONDOWN:
+                                pass
+                        
+                            gameloop.game_pvp()
+                            main_menu()
             else:
                 draw_text(mode, FONT, WHITE, WINDOW, mode_y_position)
 
