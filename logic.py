@@ -123,42 +123,42 @@ class Board:
         if color==draw.RED:
             value=100*(len(self.red_pieces) -len(self.blue_pieces))
             value+=50*(self.blocked_Blue - self.blocked_Red) 
-            if len(self.red_pieces)==0 or self.blocked_Red==len(self.red_pieces):
-                value = float('-inf')
-            elif len(self.blue_pieces)==0 or self.blocked_Blue==len(self.blue_pieces):
-                value = float('inf')    
             for piece in self.red_pieces:
                 if piece.gameposition[0]==4 and  piece.gameposition[1]==0:
-                    value = float('inf')
+                    return float('inf')
                 value -= get_pieces_distance(piece,self.finish_lines[0])
                 if self.has_friendly_neighbours(piece,draw.RED):
                     value+=20
             for piece in self.blue_pieces:
                 if piece.gameposition[0]==4 and  piece.gameposition[1]==8:
-                    value = float('inf')
+                    return float('inf')
                 value += get_pieces_distance(piece,self.finish_lines[1])
                 if self.has_friendly_neighbours(piece,draw.BLUE):
                     value-=20
+            if len(self.red_pieces)==0 or self.blocked_Red==len(self.red_pieces):
+                return  float('-inf')
+            elif len(self.blue_pieces)==0 or self.blocked_Blue==len(self.blue_pieces):
+                return float('inf')            
 
         else:
             value=100*(len(self.blue_pieces) -len(self.red_pieces))
             value+=50*(self.blocked_Red - self.blocked_Blue)
-            if len(self.red_pieces)==0 or self.blocked_Red==len(self.red_pieces):
-                value = float('inf')
-            elif len(self.blue_pieces)==0 or self.blocked_Blue==len(self.blue_pieces):
-                value = float('-inf')
             for piece in self.blue_pieces:
                 if piece.gameposition[0]==4 and  piece.gameposition[1]==8:
-                    value = float('inf')
+                    return  float('inf')
                 value -= get_pieces_distance(piece,self.finish_lines[0])
                 if self.has_friendly_neighbours(piece,draw.BLUE):
                     value+=20
             for piece in self.red_pieces:
                 if piece.gameposition[0]==4 and  piece.gameposition[1]==0:
-                    value = float('inf')
+                    return float('inf')
                 value += get_pieces_distance(piece,self.finish_lines[1])   
                 if self.has_friendly_neighbours(piece,draw.RED):
-                    value-=20     
+                    value-=20
+            if len(self.red_pieces)==0 or self.blocked_Red==len(self.red_pieces):
+                return  float('inf')
+            elif len(self.blue_pieces)==0 or self.blocked_Blue==len(self.blue_pieces):
+                return float('-inf')     
         return value
     
     
@@ -192,6 +192,8 @@ class Board:
             return min_aval
         
     def find_best_move(self, depth):    
+        print(len(self.red_pieces))
+        print(self.blocked_Red)
         best_move = None
         max_eval = float('-inf')
         alpha = float('-inf')
@@ -204,6 +206,7 @@ class Board:
             if eval > max_eval:
                 max_eval = eval
                 best_move = move
+        print("score",max_eval)        
         return best_move
 
     def play_best_move(self):
@@ -318,8 +321,12 @@ class Board:
         #getopponent color
         if color==draw.BLUE:
             opponent=draw.RED
+            if to_pos[0]==4 and to_pos[1]==0:
+                return False
         else:
             opponent=draw.BLUE
+            if to_pos[0]==4 and to_pos[1]==get_col_number(4)-1:
+                return False
         check= self.check_pos(cube_to_coord((tox,toy,toz)))    
         if check==None:  
             pass
