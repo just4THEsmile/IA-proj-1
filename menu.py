@@ -2,6 +2,7 @@ import pygame
 import logic
 import sys
 import gameloop
+import draw
 
 # Initialize Pygame
 pygame.init()
@@ -62,7 +63,7 @@ def game_mode_selection():
                             elif event.type == pygame.MOUSEBUTTONDOWN:
                                 pass
                         
-                            gameloop.game_pvp()
+                            gameloop.game_pvb(draw.RED)
                             main_menu()
             else:
                 draw_text(mode, FONT, WHITE, WINDOW, mode_y_position)
