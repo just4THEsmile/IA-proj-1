@@ -56,6 +56,9 @@ def game_pvb(botcolor):
     board = logic.Board()
     # Main game loop
     running = True
+
+    ## test performance
+    
     while running:
         if board.check_win_conditions():
             running = False   

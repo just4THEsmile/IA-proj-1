@@ -2,6 +2,7 @@ import math
 import draw
 import copy
 import time
+import numpy
 
 class Stone:
     def __init__(self, color, gameposition,position,blocked=False):
@@ -77,27 +78,27 @@ class Board:
             opponent=draw.BLUE    
         #calculates every move in the 6 directions
         
-        for var in range(1,8):
+        for var in numpy.arange(1,8):
             if self.can_move(piece.gameposition,cube_to_coord((fromx+var,fromy-var,fromz)),color,self.size):
                 possibilities.append((piece.gameposition,cube_to_coord((fromx+var,fromy-var,fromz))))
                 break
-        for var in range(1,8):
+        for var in numpy.arange(1,8):
             if self.can_move(piece.gameposition,cube_to_coord((fromx-var,fromy+var,fromz)),color,self.size):
                 possibilities.append((piece.gameposition,cube_to_coord((fromx-var,fromy+var,fromz))))
                 break
-        for var in range(1,8):
+        for var in numpy.arange(1,8):
             if self.can_move(piece.gameposition,cube_to_coord((fromx,fromy+var,fromz-var)),color,self.size):
                 possibilities.append((piece.gameposition,cube_to_coord((fromx,fromy+var,fromz-var))))
                 break    
-        for var in range(1,8):
+        for var in numpy.arange(1,8):
             if self.can_move(piece.gameposition,cube_to_coord((fromx,fromy-var,fromz+var)),color,self.size):
                 possibilities.append((piece.gameposition,cube_to_coord((fromx,fromy-var,fromz+var))))
                 break    
-        for var in range(1,8):
+        for var in numpy.arange(1,8):
             if self.can_move(piece.gameposition,cube_to_coord((fromx+var,fromy,fromz-var)),color,self.size):
                 possibilities.append((piece.gameposition,cube_to_coord((fromx+var,fromy,fromz-var))))
                 break
-        for var in range(1,8):
+        for var in numpy.arange(1,8):
             if self.can_move(piece.gameposition,cube_to_coord((fromx-var,fromy,fromz+var)),color,self.size):
                 possibilities.append((piece.gameposition,cube_to_coord((fromx-var,fromy,fromz+var))))
                 break  
@@ -122,7 +123,7 @@ class Board:
         value=0
         if color==draw.RED:
             value=100*(len(self.red_pieces) -len(self.blue_pieces))
-            value+=50*(self.blocked_Blue - self.blocked_Red) 
+            value+=20*(self.blocked_Blue - self.blocked_Red) 
             for piece in self.red_pieces:
                 if piece.gameposition[0]==4 and  piece.gameposition[1]==0:
                     return float('inf')
@@ -142,7 +143,7 @@ class Board:
 
         else:
             value=100*(len(self.blue_pieces) -len(self.red_pieces))
-            value+=50*(self.blocked_Red - self.blocked_Blue)
+            value+=20*(self.blocked_Red - self.blocked_Blue)
             for piece in self.blue_pieces:
                 if piece.gameposition[0]==4 and  piece.gameposition[1]==8:
                     return  float('inf')
@@ -202,6 +203,7 @@ class Board:
         for move in self.get_possible_moves(self.current_player):
             new_board = copy.deepcopy(self)
             new_board.change_piece_position(move[0],move[1])
+            new_board.check_blocked()
             eval = new_board.minimax(beta,alpha,depth, self.current_player,False)
             if eval > max_eval:
                 max_eval = eval
@@ -211,7 +213,7 @@ class Board:
 
     def play_best_move(self):
         time1 = time.time()
-        move = self.find_best_move(2)
+        move = self.find_best_move(3)
         time2 = time.time()
         delta= time2-time1
         print("Time to calculate the best move: ",delta)
@@ -346,30 +348,30 @@ class Board:
                 return False
             else:
                 if(dx>0):
-                    xrange=range(fromx,tox)
+                    xrange=numpy.arange(fromx,tox)
                 else:
-                    xrange=range(fromx,tox,-1)
+                    xrange=numpy.arange(fromx,tox,-1)
                 if dy>0:
-                    yrange=range(fromy,toy)
+                    yrange=numpy.arange(fromy,toy)
                 else:
-                    yrange=range(fromy,toy,-1)    
+                    yrange=numpy.arange(fromy,toy,-1)    
                 if dz>0:
-                    zrange=range(fromz,toz)
+                    zrange=numpy.arange(fromz,toz)
                 else:
-                    zrange=range(fromz,toz,-1)    
+                    zrange=numpy.arange(fromz,toz,-1)    
 
                 if dx==0:
-                    for i in range(1,abs(dy)):
+                    for i in numpy.arange(1,abs(dy)):
                         if self.check_pos_color(cube_to_coord((fromx,yrange[i],zrange[i])),color)==False:
                             return False
                     return True    
                 elif dy==0:
-                    for i in range(1,abs(dx)):
+                    for i in numpy.arange(1,abs(dx)):
                         if self.check_pos_color(cube_to_coord((xrange[i],fromy,zrange[i])),color)==False:
                             return False
                     return True
                 elif dz==0:
-                    for i in range(1,abs(dx)):
+                    for i in numpy.arange(1,abs(dx)):
                         if self.check_pos_color(cube_to_coord((xrange[i],yrange[i],fromz)),color)==False:
                             return False
                     return True
@@ -385,8 +387,6 @@ class Board:
         print("movement")
         if self.check_pos_color(destination,self.selected_piece.color)==True or self.check_bounds(destination)==False or self.check_can_move_finishing_line(destination,self.selected_piece.color)==False:
             return False
-        print(self.check_can_move_finishing_line(destination,self.selected_piece.color))
-        print(self.get_possible_moves(self.selected_piece.color))
         if self.selected_piece and self.can_move(self.selected_piece.gameposition,destination,self.selected_piece.color) and self.selected_piece.blocked==False:
             print("valid move")
             piece=self.check_pos(destination)
@@ -536,19 +536,6 @@ def is_neighbour(board,stone1,stone2,sizeofside=5):
 
 
 
-def check_and_block_stones(board):
-    """
-    Check for blocked stones and update their status.
-    """
-    # Implement logic to check for blocked stones and update their status
-    pass
-
-def check_win_conditions(board):
-    """
-    Check win conditions to determine if a player has won or if the game has ended in a stalemate.
-    """
-    # Implement win condition checking logic
-    pass
 
 def get_piece_at_position(board, position):
     """
