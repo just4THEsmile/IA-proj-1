@@ -7,8 +7,8 @@ import pygame
 
 
 
-def game_pvp():    
-    board = logic.Board()
+def game_pvp(size):    
+    board = logic.Board(size)
     # Main game loop
     running = True
     while running:
@@ -52,8 +52,8 @@ def game_pvp():
     # Quit Pygame
     pygame.quit()
 
-def game_pvb(botcolor,dificulty=1):
-    board = logic.Board()
+def game_pvb(botcolor,size=5,dificulty=1):
+    board = logic.Board(size)
     # Main game loop
     running = True
 
