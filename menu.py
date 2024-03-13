@@ -1,10 +1,8 @@
 import pygame
 import logic
 import sys
-
 import gameloop
 import draw
-
 
 # Initialize Pygame
 pygame.init()
