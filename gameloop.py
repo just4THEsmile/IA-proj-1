@@ -52,7 +52,7 @@ def game_pvp():
     # Quit Pygame
     pygame.quit()
 
-def game_pvb(botcolor):
+def game_pvb(botcolor,dificulty=1):
     board = logic.Board()
     # Main game loop
     running = True
