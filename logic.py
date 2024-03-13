@@ -4,6 +4,17 @@ import copy
 import time
 import numpy
 
+class Move:
+    def __init__(self,start,destiny):
+        self.start=start
+        self.destiny=destiny
+    def add(self):
+        self.a+=1
+    def __str__(self):
+        return 'Move' + str(self.start) +'->'+ str(self.destiny)
+    def __repr__(self) -> str:
+        return 'move' + str(self.start) +'->'+ str(self.destiny)
+
 class Stone:
     def __init__(self, color, gameposition,position,blocked=False):
         self.color = color
@@ -38,18 +49,20 @@ class Board:
         self.selected_piece = None
         self.blocked_Red = 0
         self.blocked_Blue = 0
-        (self.red_pieces, self.blue_pieces,self.finish_lines) = initialize_board()
+        (self.red_pieces, self.blue_pieces,self.finish_lines) = initialize_board(sizeofside)
         self.size=sizeofside
 
     def draw(self):
         draw.WINDOW.fill(draw.WHITE)
         for row in range((self.size*2-1)):
-            for col in range(get_col_number(row)):
-                x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row) * draw.horizontal_distance) / 2
+            for col in range(get_col_number(row,self.size)):
+                x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row,self.size) * draw.horizontal_distance) / 2
                 y = row * draw.vertical_distance + (draw.HEIGHT - 9 * draw.vertical_distance) / 2
                 draw.draw_hexagon(x, y, draw.hex_size, draw.BLACK)
-        for pieces in self.red_pieces+self.blue_pieces:
-            pieces.draw()    
+        for pieces in self.red_pieces:
+            pieces.draw()  
+        for pieces in self.blue_pieces:
+            pieces.draw()      
         for finish in self.finish_lines:
             finish.draw()
         if(self.selected_piece!=None):
@@ -59,63 +72,76 @@ class Board:
     def has_friendly_neighbours(self,piece,color):
         if color==draw.BLUE:
             for piece2 in self.blue_pieces:
-                if is_neighbour(self,piece,piece2,self.size):
+                if is_neighbour(piece,piece2,self.size):
                     return True
             return False
         else:
             for piece2 in self.red_pieces:
-                if is_neighbour(self,piece,piece2,self.size):
+                if is_neighbour(piece,piece2,self.size):
                     return True
             return False
     
     def get_neighbouring_possibilities(self,piece,color):    
-        (fromx,fromy,fromz)=coord_to_cube(piece.gameposition)
-        possibilities=[]
+        (fromx,fromy,fromz)=coord_to_cube(piece.gameposition,self.size)
+        possibilities=numpy.array([])
         #get opponent color
         if color==draw.BLUE:
             opponent=draw.RED
         else:
             opponent=draw.BLUE    
         #calculates every move in the 6 directions
+        maxrow=self.size*2-2
         
-        for var in numpy.arange(1,8):
-            if self.can_move(piece.gameposition,cube_to_coord((fromx+var,fromy-var,fromz)),color,self.size):
-                possibilities.append((piece.gameposition,cube_to_coord((fromx+var,fromy-var,fromz))))
+        for var in numpy.arange(1,maxrow):
+            if fromx+var>=self.size or fromy-var <= -self.size:
                 break
-        for var in numpy.arange(1,8):
-            if self.can_move(piece.gameposition,cube_to_coord((fromx-var,fromy+var,fromz)),color,self.size):
-                possibilities.append((piece.gameposition,cube_to_coord((fromx-var,fromy+var,fromz))))
+            if self.can_move(piece.gameposition,cube_to_coord((fromx+var,fromy-var,fromz),self.size),color,self.size):
+                possibilities = numpy.append(possibilities,Move(piece.gameposition,cube_to_coord((fromx+var,fromy-var,fromz),self.size)))
                 break
-        for var in numpy.arange(1,8):
-            if self.can_move(piece.gameposition,cube_to_coord((fromx,fromy+var,fromz-var)),color,self.size):
-                possibilities.append((piece.gameposition,cube_to_coord((fromx,fromy+var,fromz-var))))
+        for var in numpy.arange(1,maxrow):
+            if fromx-var<=-self.size or fromy+var >= self.size:
+                break
+            if self.can_move(piece.gameposition,cube_to_coord((fromx-var,fromy+var,fromz),self.size),color,self.size):
+                possibilities = numpy.append(possibilities,Move(piece.gameposition,cube_to_coord((fromx-var,fromy+var,fromz),self.size)))
+                break
+        for var in numpy.arange(1,maxrow):
+            if fromy+var>=self.size or fromz-var <= -self.size:
+                break
+            if self.can_move(piece.gameposition,cube_to_coord((fromx,fromy+var,fromz-var),self.size),color,self.size):
+                possibilities = numpy.append(possibilities,Move(piece.gameposition,cube_to_coord((fromx,fromy+var,fromz-var),self.size)))
                 break    
-        for var in numpy.arange(1,8):
-            if self.can_move(piece.gameposition,cube_to_coord((fromx,fromy-var,fromz+var)),color,self.size):
-                possibilities.append((piece.gameposition,cube_to_coord((fromx,fromy-var,fromz+var))))
-                break    
-        for var in numpy.arange(1,8):
-            if self.can_move(piece.gameposition,cube_to_coord((fromx+var,fromy,fromz-var)),color,self.size):
-                possibilities.append((piece.gameposition,cube_to_coord((fromx+var,fromy,fromz-var))))
+        for var in numpy.arange(1,maxrow):
+            if fromy-var<=-self.size or fromz+var >= self.size:
                 break
-        for var in numpy.arange(1,8):
-            if self.can_move(piece.gameposition,cube_to_coord((fromx-var,fromy,fromz+var)),color,self.size):
-                possibilities.append((piece.gameposition,cube_to_coord((fromx-var,fromy,fromz+var))))
+            if self.can_move(piece.gameposition,cube_to_coord((fromx,fromy-var,fromz+var),self.size),color,self.size):
+                possibilities = numpy.append(possibilities,Move(piece.gameposition,cube_to_coord((fromx,fromy-var,fromz+var),self.size)))
+                break    
+        for var in numpy.arange(1,maxrow):
+            if fromz-var>=self.size or fromx+var <= -self.size:
+                break
+            if self.can_move(piece.gameposition,cube_to_coord((fromx+var,fromy,fromz-var),self.size),color,self.size):
+                possibilities = numpy.append(possibilities,Move(piece.gameposition,cube_to_coord((fromx+var,fromy,fromz-var),self.size)))
+                break
+        for var in numpy.arange(1,maxrow):
+            if fromz+var<=-self.size or fromx-var >= self.size:
+                break
+            if self.can_move(piece.gameposition,cube_to_coord((fromx-var,fromy,fromz+var),self.size),color,self.size):
+                possibilities = numpy.append(possibilities,Move(piece.gameposition,cube_to_coord((fromx-var,fromy,fromz+var),self.size)))
                 break  
         return possibilities   
 
                 
 
     def get_possible_moves(self,color):
-        moves=[]
+        moves=numpy.array([])
         if color==draw.BLUE:
             for piece in self.blue_pieces:
                 if piece.blocked==False:
-                    moves.extend(self.get_neighbouring_possibilities(piece,color))
+                    moves= numpy.append(moves,self.get_neighbouring_possibilities(piece,color))
         else:
             for piece in self.red_pieces:
                 if piece.blocked==False:
-                    moves.extend(self.get_neighbouring_possibilities(piece,color))
+                    moves= numpy.append(moves,self.get_neighbouring_possibilities(piece,color))
         return moves 
     
     
@@ -125,13 +151,13 @@ class Board:
             value=100*(len(self.red_pieces) -len(self.blue_pieces))
             value+=20*(self.blocked_Blue - self.blocked_Red) 
             for piece in self.red_pieces:
-                if piece.gameposition[0]==4 and  piece.gameposition[1]==0:
+                if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==0:
                     return float('inf')
                 value -= get_pieces_distance(piece,self.finish_lines[0])
                 if self.has_friendly_neighbours(piece,draw.RED):
                     value+=20
             for piece in self.blue_pieces:
-                if piece.gameposition[0]==4 and  piece.gameposition[1]==8:
+                if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==get_col_number((self.size-1),self.size)-1:
                     return float('inf')
                 value += get_pieces_distance(piece,self.finish_lines[1])
                 if self.has_friendly_neighbours(piece,draw.BLUE):
@@ -145,13 +171,13 @@ class Board:
             value=100*(len(self.blue_pieces) -len(self.red_pieces))
             value+=20*(self.blocked_Red - self.blocked_Blue)
             for piece in self.blue_pieces:
-                if piece.gameposition[0]==4 and  piece.gameposition[1]==8:
+                if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==get_col_number((self.size-1),self.size)-1:
                     return  float('inf')
                 value -= get_pieces_distance(piece,self.finish_lines[0])
                 if self.has_friendly_neighbours(piece,draw.BLUE):
                     value+=20
             for piece in self.red_pieces:
-                if piece.gameposition[0]==4 and  piece.gameposition[1]==0:
+                if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==0:
                     return float('inf')
                 value += get_pieces_distance(piece,self.finish_lines[1])   
                 if self.has_friendly_neighbours(piece,draw.RED):
@@ -171,7 +197,7 @@ class Board:
             max_aval = float('-inf')
             for move in self.get_possible_moves(player):
                 new_board = copy.deepcopy(self)
-                new_board.change_piece_position(move[0],move[1])
+                new_board.change_piece_position(move.start,move.destiny)
                 aval= new_board.minimax(beta,alpha,depth-1,player,False)
                 max_aval = max(max_aval,aval)
                 alpha = max(alpha, aval)
@@ -183,7 +209,7 @@ class Board:
             min_aval = float('inf')
             for move in self.get_possible_moves(player):
                 new_board = copy.deepcopy(self)
-                new_board.change_piece_position(move[0],move[1])
+                new_board.change_piece_position(move.start,move.destiny)
                 aval= new_board.minimax(beta,alpha,depth-1,player,True)
                 min_aval = min(min_aval,aval)
                 beta = min(beta, aval)
@@ -202,7 +228,7 @@ class Board:
         print("possible moves",self.get_possible_moves(self.current_player))
         for move in self.get_possible_moves(self.current_player):
             new_board = copy.deepcopy(self)
-            new_board.change_piece_position(move[0],move[1])
+            new_board.change_piece_position(move.start,move.destiny)
             new_board.check_blocked()
             eval = new_board.minimax(beta,alpha,depth, self.current_player,False)
             if eval > max_eval:
@@ -213,27 +239,30 @@ class Board:
 
     def play_best_move(self):
         time1 = time.time()
-        move = self.find_best_move(3)
+        move = self.find_best_move(4)
         time2 = time.time()
         delta= time2-time1
         print("Time to calculate the best move: ",delta)
         print("Best move: ",move)
-        self.change_piece_position(move[0],move[1])
+        self.change_piece_position(move.start,move.destiny)
 
 
     #checks if the position has a piece
     def check_pos(self,pos):
-        if pos[0]<0 or pos[0]>8 or pos[1]<0 or pos[1]>=get_col_number(pos[0]):
+        if pos[0]<0 or pos[0]>(self.size*2-1) or pos[1]<0 or pos[1]>=get_col_number(pos[0],self.size):
             return False
         else:
-            for piece in self.blue_pieces+self.red_pieces:
+            for piece in self.blue_pieces:
+                if piece.gameposition==pos:
+                    return piece
+            for piece in self.red_pieces:
                 if piece.gameposition==pos:
                     return piece
         return None
     
     #checks if the position has a piece of the color
     def check_pos_color(self,pos,color):
-        if pos[0]<0 or pos[0]>8 or pos[1]<0 or pos[1]>=get_col_number(pos[0]):
+        if pos[0]<0 or pos[0]>(self.size*2-1) or pos[1]<0 or pos[1]>=get_col_number(pos[0],self.size):
             return False
         else:
             if color==draw.BLUE:
@@ -247,15 +276,15 @@ class Board:
         return False
     
     def check_bounds(self,pos):
-        if pos[0]<0 or pos[0]>(self.size*2-1) or pos[1]<0 or pos[1]>=get_col_number(pos[0]):
+        if pos[0]<0 or pos[0]>(self.size*2-1) or pos[1]<0 or pos[1]>=get_col_number(pos[0],self.size):
             return False
         return True
     
     def check_can_move_finishing_line(self,pos,color):
-        if pos[0]==4:
+        if pos[0]==(self.size-1):
             if pos[1]==0 and color==draw.BLUE:
                 return False
-            elif pos[1]==get_col_number(4)-1 and color==draw.RED:
+            elif pos[1]==get_col_number((self.size-1),self.size)-1 and color==draw.RED:
                 return False
             
         return True
@@ -263,21 +292,21 @@ class Board:
 
         for piece in self.red_pieces:
             if piece.gameposition==pos:
-                self.red_pieces.remove(piece)
+                self.red_pieces= numpy.delete(self.red_pieces,numpy.where(self.red_pieces == piece)[0])
 
         for piece in self.blue_pieces:
             if piece.gameposition==pos:
-                self.blue_pieces.remove(piece)
+                self.blue_pieces= numpy.delete(self.blue_pieces,numpy.where(self.blue_pieces == piece)[0])
                   
 
     def change_piece_position(self,start,destination):
         for piece in self.red_pieces:
             if destination==piece.gameposition:
-                self.red_pieces.remove(piece)
+                self.red_pieces= numpy.delete(self.red_pieces,numpy.where(self.red_pieces == piece)[0])
                 break
         for piece in self.blue_pieces:
             if destination==piece.gameposition:
-                self.blue_pieces.remove(piece)
+                self.blue_pieces= numpy.delete(self.blue_pieces,numpy.where(self.blue_pieces == piece)[0])
                 break        
         piece=self.check_pos(start)
         if type(piece)!=Stone:
@@ -297,9 +326,9 @@ class Board:
 
         for piece in self.red_pieces:
             for piece2 in self.blue_pieces:
-                (fromx,fromy,fromz)=coord_to_cube(piece.gameposition)
+                (fromx,fromy,fromz)=coord_to_cube(piece.gameposition,self.size)
 
-                (tox,toy,toz)=coord_to_cube(piece2.gameposition)
+                (tox,toy,toz)=coord_to_cube(piece2.gameposition,self.size)
                 dx = tox - fromx
                 dy = toy - fromy
                 dz = toz - fromz
@@ -313,9 +342,9 @@ class Board:
                             self.blocked_Blue+=1    
 
     def can_move(self,from_pos,to_pos,color,sizeofside=5):
-        (fromx,fromy,fromz)=coord_to_cube(from_pos)
+        (fromx,fromy,fromz)=coord_to_cube(from_pos,sizeofside)
 
-        (tox,toy,toz)=coord_to_cube(to_pos)
+        (tox,toy,toz)=coord_to_cube(to_pos,sizeofside)
         dx = tox - fromx
         dy = toy - fromy
         dz = toz - fromz
@@ -323,13 +352,13 @@ class Board:
         #getopponent color
         if color==draw.BLUE:
             opponent=draw.RED
-            if to_pos[0]==4 and to_pos[1]==0:
+            if to_pos[0]==(self.size-1) and to_pos[1]==0:
                 return False
         else:
             opponent=draw.BLUE
-            if to_pos[0]==4 and to_pos[1]==get_col_number(4)-1:
+            if to_pos[0]==(self.size-1) and to_pos[1]==get_col_number((self.size-1),self.size)-1:
                 return False
-        check= self.check_pos(cube_to_coord((tox,toy,toz)))    
+        check= self.check_pos(cube_to_coord((tox,toy,toz),self.size))    
         if check==None:  
             pass
         elif check==False:
@@ -342,7 +371,7 @@ class Board:
         if(dx==0 or dy==0 or dz==0):
             #single distance movement
             if(dx==1 or dy==1 or dz==1):
-                if self.check_pos(cube_to_coord((tox,toy,toz)))==None:
+                if self.check_pos(cube_to_coord((tox,toy,toz),self.size))==None:
 
                     return True
                 return False
@@ -362,19 +391,19 @@ class Board:
 
                 if dx==0:
                     for i in numpy.arange(1,abs(dy)):
-                        if self.check_pos_color(cube_to_coord((fromx,yrange[i],zrange[i])),color)==False:
+                        if self.check_pos_color(cube_to_coord((fromx,yrange[i],zrange[i]),self.size),color)==False:
                             return False
                     return True    
                 elif dy==0:
                     for i in numpy.arange(1,abs(dx)):
-                        if self.check_pos_color(cube_to_coord((xrange[i],fromy,zrange[i])),color)==False:
+                        if self.check_pos_color(cube_to_coord((xrange[i],fromy,zrange[i]),self.size),color)==False:
                             return False
                     return True
                 elif dz==0:
                     for i in numpy.arange(1,abs(dx)):
-                        if self.check_pos_color(cube_to_coord((xrange[i],yrange[i],fromz)),color)==False:
+                        if self.check_pos_color(cube_to_coord((xrange[i],yrange[i],fromz),self.size),color)==False:
                             return False
-                    return True
+                    return True       
         return False    
                     
     
@@ -387,7 +416,8 @@ class Board:
         print("movement")
         if self.check_pos_color(destination,self.selected_piece.color)==True or self.check_bounds(destination)==False or self.check_can_move_finishing_line(destination,self.selected_piece.color)==False:
             return False
-        if self.selected_piece and self.can_move(self.selected_piece.gameposition,destination,self.selected_piece.color) and self.selected_piece.blocked==False:
+        print(coord_to_cube(self.selected_piece.gameposition,self.size),coord_to_cube(destination,self.size))
+        if self.selected_piece and self.can_move(self.selected_piece.gameposition,destination,self.selected_piece.color,self.size) and self.selected_piece.blocked==False:
             print("valid move")
             piece=self.check_pos(destination)
             if piece!=None :
@@ -407,23 +437,16 @@ class Board:
         else:
             print("Invalid move")
 
-    def is_valid_move(self, stone, destination):
-        """
-        Check if a move is valid.
-        """
-        # Implement move validation logic here
-        pass
-
 
 
     def check_win_conditions(self):
         """
         Check win conditions to determine if a player has won or if the game has ended in a stalemate.
         """
-        if self.check_pos_color((4,0),draw.RED)==True:
+        if self.check_pos_color(((self.size-1),0),draw.RED)==True:
             print("Red wins")
             return True
-        elif self.check_pos_color((4,get_col_number(4)-1),draw.BLUE)==True:
+        elif self.check_pos_color(((self.size-1),get_col_number((self.size-1),self.size)-1),draw.BLUE)==True:
             print("Blue wins")
             return True
         elif len(self.red_pieces)==self.blocked_Red:
@@ -439,7 +462,7 @@ class Board:
         y = position[1]
 
         row = (y - (draw.HEIGHT - 9 * draw.vertical_distance) / 2) / draw.vertical_distance
-        col = (x - (draw.WIDTH - get_col_number(round(row)) * draw.horizontal_distance) / 2) / draw.horizontal_distance
+        col = (x - (draw.WIDTH - get_col_number(round(row),self.size) * draw.horizontal_distance) / 2) / draw.horizontal_distance
 
         return (round(row), round(col))
 
@@ -447,27 +470,31 @@ class Board:
         """
         Get the piece at the given position on the board.
         """
-        for piece in self.blue_pieces+self.red_pieces:
+        for piece in self.blue_pieces:
             
             if math.hypot(piece.position[0] - position[0], piece.position[1] - position[1]) < draw.hex_size:
                 print(piece.position,piece.gameposition)
                 return piece
+        for piece in self.red_pieces:
+            if math.hypot(piece.position[0] - position[0], piece.position[1] - position[1]) < draw.hex_size:
+                print(piece.position,piece.gameposition)
+                return piece   
         return None
     
     def get_position_from_gameposition(self,gameposition):
         row, col = gameposition
-        x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row) * draw.horizontal_distance) / 2
+        x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row,self.size) * draw.horizontal_distance) / 2
         y = row * draw.vertical_distance + (draw.HEIGHT - 9 * draw.vertical_distance) / 2
         return (x,y)
     
 
 
-def get_col_number(row):
-    if row<5:
-        return row+5
+def get_col_number(row,sizeofside=5):
+    if row<sizeofside:
+        return row+sizeofside
     else:
-        return 13-row
-def initialize_board():
+        return ((3*(sizeofside-1))+1)-row
+def initialize_board(sizeofside=5):
     """
     Initialize the board state with stones placed according to the game rules.
     """
@@ -475,25 +502,26 @@ def initialize_board():
     red_pieces=[]
     blue_pieces=[]
     Finish_lines=[]
+    
     print(type(board))
-    for row in range(9):
-        for col in range(get_col_number(row)):
-            x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row) * draw.horizontal_distance) / 2
+    for row in range((sizeofside*2-1)):
+        for col in range(get_col_number(row,sizeofside)):
+            x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row,sizeofside) * draw.horizontal_distance) / 2
 
             y = row * draw.vertical_distance + (draw.HEIGHT - 9 * draw.vertical_distance) / 2
             gameposition = (row, col)
             position = (x, y)
-            if row ==4:
+            if row ==(sizeofside-1):
                 if col == 0:
                     board[gameposition] = Finish_line(draw.RED,gameposition, position)
                     Finish_lines.append(Finish_line(draw.RED,gameposition, position))
-                elif col == get_col_number(row) - 1:
+                elif col == get_col_number(row,sizeofside) - 1:
                     board[gameposition] = Finish_line(draw.BLUE, gameposition,position)
                     Finish_lines.append(Finish_line(draw.BLUE,gameposition, position))
                 elif col == 1:
                     board[gameposition] = Stone(draw.BLUE, gameposition,position)
                     blue_pieces.append(Stone(draw.BLUE, gameposition,position))
-                elif col == get_col_number(row) - 2:
+                elif col == get_col_number(row,sizeofside) - 2:
                     board[gameposition] = Stone(draw.RED, gameposition,position)
                     red_pieces.append(Stone(draw.RED, gameposition,position))
                 else:
@@ -501,18 +529,19 @@ def initialize_board():
             elif col == 0:
                 board[gameposition] = Stone(draw.BLUE, gameposition,position)
                 blue_pieces.append(Stone(draw.BLUE, gameposition,position))
-            elif col == get_col_number(row) - 1:
+            elif col == get_col_number(row,sizeofside) - 1:
                 board[gameposition] = Stone(draw.RED, gameposition,position)
                 red_pieces.append(Stone(draw.RED, gameposition,position))
             else:
                 board[gameposition] = None
-    return (red_pieces,blue_pieces,Finish_lines)
+            
+    return (numpy.array(red_pieces),numpy.array(blue_pieces),numpy.array(Finish_lines))
 
 
 
 
 
-def is_neighbour(board,stone1,stone2,sizeofside=5):
+def is_neighbour(stone1,stone2,sizeofside=5):
     (fromx,fromy)=stone1.gameposition
     (tox,toy)=stone2.gameposition
 
@@ -548,55 +577,8 @@ def get_piece_at_position(board, position):
     return None
 
 
-def oddr_to_cube(hex):
-    """
-    Convert from "odd-r" offset coordinates to cube coordinates.
-    hex is a tuple representing the offset coordinates of the hexagon.
-    """
-    x = hex[1] - (hex[0] - (hex[0] & 1)) // 2
-    z = hex[0]
-    y = -x - z
-    return (x, y, z)
-
-def cube_to_oddr(cube):
-    """
-    Convert from cube coordinates to "odd-r" offset coordinates.
-    cube is a tuple representing the cube coordinates of the hexagon.
-    """
-    col = cube[0] + (cube[2] - (cube[2] & 1)) // 2
-    row = cube[2]
-    return (row, col)
 
 
-def is_straight_line(pos1, pos2,sizeofside=5):
-    """
-    Check if two positions form a straight line in a hexagonal grid.
-    pos1 and pos2 are tuples representing the axial coordinates of the positions.
-    """
-    # Convert the axial coordinates to cube coordinates
-    (fromx,fromy)=pos1
-    (tox,toy)=pos2
-    realsize=sizeofside-1
-    dx = tox - fromx
-    dy = toy - fromy
-    #same row
-    if fromx==tox:
-        return True
-    else:
-        if fromx <=(sizeofside-1) and tox<=(sizeofside-1):
-            return (dy==0) or (dy==dx)
-        elif fromx >(sizeofside-1) and tox>(sizeofside-1):
-            return (dy==0) or (dy==-dx)
-        else:
-            if(fromx<tox):
-                print("here")
-                print(dy,dx)
-                return (dy==(realsize-fromx)) or (dy==-(tox-realsize))
-            else:
-                print("ffhere")
-                print(dy,dx)
-                print(str(fromy-realsize))
-                return (dy==-(realsize-tox)) or (dy==(fromx-realsize))
 
 
 
