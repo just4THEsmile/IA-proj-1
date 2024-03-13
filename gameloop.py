@@ -23,7 +23,7 @@ def game_pvp():
                     x, y = event.pos
                     selpiece = board.get_piece_at_position((x, y))
                     
-                    if(selpiece==None or selpiece.color==board.current_player):
+                    if(selpiece==None or selpiece.color!=board.current_player):
                         print(selpiece)
                         print(board.get_gameposition_at_position((x, y)))
                         print("error sel piece")
@@ -52,11 +52,22 @@ def game_pvp():
     # Quit Pygame
     pygame.quit()
 
-def game_pvb():
+def game_pvb(botcolor,dificulty=1):
     board = logic.Board()
     # Main game loop
     running = True
+
+    ## test performance
+    
     while running:
+        if board.check_win_conditions():
+            running = False   
+        elif board.current_player == botcolor:
+            board.play_best_move()
+            if board.current_player==draw.RED:
+                board.current_player=draw.BLUE
+            else:   
+                board.current_player=draw.RED    
         # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -68,7 +79,7 @@ def game_pvb():
                     x, y = event.pos
                     selpiece = board.get_piece_at_position((x, y))
                     
-                    if(selpiece==None or selpiece.color==board.current_player):
+                    if(selpiece==None or selpiece.color!=board.current_player):
                         print(selpiece)
                         print(board.get_gameposition_at_position((x, y)))
                         print("error sel piece")

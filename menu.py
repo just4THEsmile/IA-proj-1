@@ -2,6 +2,10 @@ import pygame
 import logic
 import sys
 
+import gameloop
+import draw
+
+
 # Initialize Pygame
 pygame.init()
 
@@ -40,14 +44,38 @@ def game_mode_selection():
     while True:
         mx, my = pygame.mouse.get_pos()
 
-        for i, option in enumerate(game_modes):
-            menu_y_position = start_y + i * 100
-            if 100 < mx < WIDTH - 100 and menu_y_position < my < menu_y_position + 100:
-                WINDOW.fill(BLACK)  
-                for j, inner_option in enumerate(game_modes):
-                    text_color = GREEN if i == j else WHITE
-                    draw_text(inner_option, FONT, text_color, WINDOW, start_y + j * 100)
-                pygame.display.update()
+        for i, mode in enumerate(game_modes):
+            mode_y_position = start_y + i * 100
+            if 100 < mx < WIDTH - 100 and mode_y_position < my < mode_y_position + 50:
+                draw_text(mode, FONT, GREEN, WINDOW, mode_y_position)
+                if pygame.mouse.get_pressed()[0] and mode=="Human vs Human":  
+                    pygame.event.wait()  
+                    running = True
+                    while running:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            elif event.type == pygame.MOUSEBUTTONDOWN:
+                                pass
+                        
+                            gameloop.game_pvp()
+                            main_menu()
+                    return  
+                elif pygame.mouse.get_pressed()[0] and mode=="Human vs Computer":
+                    pygame.event.wait()  
+                    print("Human vs Computer")
+                    running = True
+                    while running:
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            elif event.type == pygame.MOUSEBUTTONDOWN:
+                                pass
+                        
+                            gameloop.game_pvb(draw.RED)
+                            main_menu()
+            else:
+                draw_text(mode, FONT, WHITE, WINDOW, mode_y_position)
 
                 if pygame.mouse.get_pressed()[0]:
                     pygame.time.wait(200)  
