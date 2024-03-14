@@ -41,32 +41,32 @@ def game_mode_selection(size):
 
     while True:
         mx, my = pygame.mouse.get_pos()
+        hover = None
 
         for i, mode in enumerate(game_modes):
             mode_y_position = start_y + i * 100
-            if 100 < mx < WIDTH - 100 and mode_y_position < my < mode_y_position + 50:
-                draw_text(mode, FONT, GREEN, WINDOW, mode_y_position)
-                if pygame.mouse.get_pressed()[0] and mode=="Human vs Human":  
-                    pygame.event.wait()  
-                    running = True
-                    while running:
-                        for event in pygame.event.get():
-                            if event.type == pygame.QUIT:
-                                running = False
-                            elif event.type == pygame.MOUSEBUTTONDOWN:
-                                pass
-                        
-                            gameloop.game_pvp(size)
-                            main_menu()
-                    return  
-                elif pygame.mouse.get_pressed()[0] and mode=="Human vs Computer":
-                    pygame.event.wait()  
-                    print("Human vs Computer")
-                    gameloop.game_pvb(draw.RED,size)
-                    main_menu()
-            else:
-                draw_text(mode, FONT, WHITE, WINDOW, mode_y_position)
+            
+            if 100 < mx < WIDTH - 100 and mode_y_position < my < mode_y_position + 100:
+                hover = i
 
+                if pygame.mouse.get_pressed()[0]:
+                    pygame.event.wait()
+                    if mode == "Human vs Human":
+                        gameloop.game_pvp(size)
+                        main_menu()
+                        return
+                    elif mode == "Human vs Computer":
+                        difficulty = difficulty_select()  
+                        gameloop.game_pvb(draw.RED, size, difficulty)  
+                        main_menu()
+                        return
+                    
+        WINDOW.fill(BLACK)
+        for j, option in enumerate(game_modes):
+            color = GREEN if j == hover else WHITE
+            menu_y_position = start_y + j * 100
+            draw_text(option, FONT, color, WINDOW, menu_y_position)
+        pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -74,34 +74,33 @@ def game_mode_selection(size):
                 sys.exit()
 
 
-
 def difficulty_select():
-    difficulties = ["Easy", "Medium", "Hard"]  
+    difficulties = ["Easy", "Medium", "Hard"]
     menu_height = len(difficulties) * 100
     start_y = (HEIGHT - menu_height) // 2
 
-    WINDOW.fill(BLACK)
-    for i, level in enumerate(difficulties):
-        menu_y_position = start_y + i * 100
-        draw_text(level, FONT, WHITE, WINDOW, menu_y_position)
-    pygame.display.update()
 
     while True:
         mx, my = pygame.mouse.get_pos()
+        WINDOW.fill(BLACK)  
 
         for i, level in enumerate(difficulties):
             menu_y_position = start_y + i * 100
             if 100 < mx < WIDTH - 100 and menu_y_position < my < menu_y_position + 100:
-                WINDOW.fill(BLACK)  
-                for j, inner_level in enumerate(difficulties):
-                    text_color = GREEN if i == j else WHITE
-                    draw_text(inner_level, FONT, text_color, WINDOW, start_y + j * 100)
-                pygame.display.update()
+                draw_text(level, FONT, GREEN, WINDOW, menu_y_position)  
+                if pygame.mouse.get_pressed()[0]:  
+                    pygame.event.wait()  
+                    return i + 1  
+            else:
+                draw_text(level, FONT, WHITE, WINDOW, menu_y_position)  
+
+        pygame.display.update()  
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
 
 
 def size_select():
