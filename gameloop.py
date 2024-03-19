@@ -63,7 +63,7 @@ def game_pvb(botcolor,size=5,dificulty=1):
         if board.check_win_conditions():
             running = False   
         elif board.current_player == botcolor:
-            board.play_best_move()
+            board.play_best_move(dificulty)
             if board.current_player==draw.RED:
                 board.current_player=draw.BLUE
             else:   
@@ -73,6 +73,7 @@ def game_pvb(botcolor,size=5,dificulty=1):
             if event.type == pygame.QUIT:
                 running = False
             elif board.check_win_conditions():
+                print("WINEER",board.get_winner())
                 running = False    
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if (board.selected_piece==None):

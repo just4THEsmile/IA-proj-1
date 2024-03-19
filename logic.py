@@ -4,6 +4,47 @@ import copy
 import time
 import numpy
 
+import random
+
+def monte_carlo_search(board, num_simulations):
+    moves = board.get_possible_moves(board.current_player)
+    move_scores = {move: 0 for move in moves}
+
+    for _ in range(num_simulations):
+        for move in moves:
+            # Simulate making the move and play out a random game
+            sim_board = copy.deepcopy(board)
+            sim_board.change_piece_position(move.start, move.destiny)
+            sim_board.check_blocked()
+            result = simulate_random_game(sim_board,50)
+
+            # Update scores based on simulation result
+            if result == board.current_player:
+                move_scores[move] += 1
+            elif result is None:
+                move_scores[move] += 0.5  # Draw
+            # Otherwise, no need to update for losses
+
+    # Select the move with the highest score
+    best_move = max(move_scores, key=move_scores.get)
+    return best_move
+
+def simulate_random_game(board, max_moves=1000):
+    while (not board.check_win_conditions()) and max_moves > 0:
+        moves = board.get_possible_moves(board.current_player)
+        if len(moves)>0:
+            random_move = random.choice(moves)
+            board.change_piece_position(random_move.start, random_move.destiny)
+            board.check_blocked()
+            board.current_player = draw.RED if board.current_player == draw.BLUE else draw.BLUE
+        else:
+            # No possible moves, the game is likely to end in a draw
+            return None
+        max_moves -= 1
+
+    # Return the winner of the game
+    return board.get_winner()
+
 class Move:
     def __init__(self,start,destiny):
         self.start=start
@@ -234,16 +275,36 @@ class Board:
             if eval > max_eval:
                 max_eval = eval
                 best_move = move
+        ## monte carlos test     
+        
         print("score",max_eval)        
         return best_move
 
-    def play_best_move(self):
-        time1 = time.time()
-        move = self.find_best_move(4)
-        time2 = time.time()
-        delta= time2-time1
-        print("Time to calculate the best move: ",delta)
-        print("Best move: ",move)
+    def play_best_move(self,dificulty=1):
+        if dificulty==1:
+
+            time1 = time.time()
+            move = self.find_best_move(2)
+            time2 = time.time()
+            delta= time2-time1
+            print("Time to calculate the best move,mode 1: ",delta)
+            print("Best move: ",move)
+        elif dificulty==2:
+            time1 = time.time()
+            move =monte_carlo_search(self, 25)
+            print(type(move))
+            print("carlos, mode 2:",move)  
+            time2 = time.time() 
+            delta= time2-time1
+            print("Time to calculate the best move: ",delta)
+        elif dificulty==3:
+            time1 = time.time()
+            move = monte_carlo_search(self, 50)
+            print(move)  
+            time2 = time.time() 
+            delta= time2-time1
+            print("Time to calculate the best move: ",delta)
+
         self.change_piece_position(move.start,move.destiny)
 
 
@@ -437,23 +498,39 @@ class Board:
         else:
             print("Invalid move")
 
-
+    def get_winner(self):
+        """
+        Get the winner of the game.
+        """
+        if self.check_win_conditions():
+            if len(self.blue_pieces)==self.blocked_Blue and len(self.red_pieces)==self.blocked_Red:
+                print("draw")
+                return None
+            elif len(self.red_pieces)==self.blocked_Red:
+                return draw.BLUE
+            elif len(self.blue_pieces)==self.blocked_Blue:
+                return draw.RED
+            elif self.check_pos_color(((self.size-1),0),draw.RED)==True:
+                return draw.RED
+            elif self.check_pos_color(((self.size-1),get_col_number((self.size-1),self.size)-1),draw.BLUE)==True:
+                return draw.BLUE
+        return None
 
     def check_win_conditions(self):
         """
         Check win conditions to determine if a player has won or if the game has ended in a stalemate.
         """
         if self.check_pos_color(((self.size-1),0),draw.RED)==True:
-            print("Red wins")
+            #print("Red wins")
             return True
         elif self.check_pos_color(((self.size-1),get_col_number((self.size-1),self.size)-1),draw.BLUE)==True:
-            print("Blue wins")
+            #print("Blue wins")
             return True
         elif len(self.red_pieces)==self.blocked_Red:
-            print("Blue wins")
+            #print("Blue wins")
             return True
         elif len(self.blue_pieces)==self.blocked_Blue:
-            print("Red wins")
+            #print("Red wins")
             return True 
         return False
     
