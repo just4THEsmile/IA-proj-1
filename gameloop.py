@@ -17,6 +17,8 @@ def game_pvp(size):
             if event.type == pygame.QUIT:
                 running = False
             elif board.check_win_conditions():
+                winner=board.get_winner()
+                return winner
                 running = False    
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if (board.selected_piece==None):
@@ -61,7 +63,9 @@ def game_pvb(botcolor,size=5,dificulty=1):
     
     while running:
         if board.check_win_conditions():
-            running = False   
+                winner=board.get_winner()
+                print("WINEER",winner)
+                return winner 
         elif board.current_player == botcolor:
             board.play_best_move(dificulty)
             if board.current_player==draw.RED:
@@ -73,8 +77,10 @@ def game_pvb(botcolor,size=5,dificulty=1):
             if event.type == pygame.QUIT:
                 running = False
             elif board.check_win_conditions():
-                print("WINEER",board.get_winner())
-                running = False    
+                winner=board.get_winner()
+                print("WINEER",winner)
+                return winner
+   
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if (board.selected_piece==None):
                     x, y = event.pos
@@ -93,7 +99,6 @@ def game_pvb(botcolor,size=5,dificulty=1):
                         board.selected_piece = None
                     elif(board.selected_piece!=None):
                         print(board.get_gameposition_at_position((x, y)))
-                        print("\n\n\n")
                         board.move_piece(board.get_gameposition_at_position((x, y)))
                     elif(destination==None):
                         print("error destination")

@@ -3,31 +3,86 @@ import draw
 import copy
 import time
 import numpy
-
+import threading
 import random
+class Node:
+    def __init__(self,board, move=None, parent=None):
+        self.board = board  # Board state
+        self.move = move  # Move that led to this node
+        self.parent = parent  # Parent node
+        self.children = []  # Child nodes
+        self.visits = 0  # Number of times this node has been visited
+        self.score = 0  # Accumulated score for this node
+class TimeoutException(Exception):
+    pass
+
+def timeout_handler():
+    raise TimeoutException("Timed out")
 
 def monte_carlo_search(board, num_simulations):
-    moves = board.get_possible_moves(board.current_player)
-    move_scores = {move: 0 for move in moves}
+    root = Node(board)
+    start_time = time.time()
+    timeout = num_simulations / 30
+    print("timeout",timeout)
 
-    for _ in range(num_simulations):
-        for move in moves:
-            # Simulate making the move and play out a random game
-            sim_board = copy.deepcopy(board)
-            sim_board.change_piece_position(move.start, move.destiny)
-            sim_board.check_blocked()
-            result = simulate_random_game(sim_board,50)
+    while time.time() - start_time < timeout and root.visits < num_simulations:
 
-            # Update scores based on simulation result
-            if result == board.current_player:
-                move_scores[move] += 1
-            elif result is None:
-                move_scores[move] += 0.5  # Draw
-            # Otherwise, no need to update for losses
-
-    # Select the move with the highest score
-    best_move = max(move_scores, key=move_scores.get)
+        node = root
+        moves = node.board.get_possible_moves(node.board.current_player)
+        # Selection phase
+        while len(node.children) == len(moves) and len(moves) > 0:
+            node = select_child(node)
+            if node is None:
+                break
+            moves = node.board.get_possible_moves(node.board.current_player)
+        
+        # Expansion phase
+        if not node.board.check_win_conditions():  # Expand only if the node is not a end state
+            moves = node.board.get_possible_moves(node.board.current_player)
+            if len(moves)>0:
+                new_moves=[move for move in moves if (move not in [child.move for child in node.children] )]
+                move = random.choice(new_moves)
+                new_board = copy.deepcopy(node.board)
+                new_board.change_piece_position(move.start, move.destiny)
+                new_board.check_blocked()
+                new_node = Node(new_board,move, node)
+                node.children.append(new_node)
+                node = new_node
+        
+            # Simulation phase
+            result = simulate_random_game(copy.deepcopy(node.board),1000)
+            # Backpropagation phase
+            while node:
+                node.visits += 1
+                if result == board.current_player:
+                    node.score += 1
+                elif not (result is None):
+                    node.score -= 1  # LOSS    
+                    pass
+                node = node.parent
+    # Select the move with the highest average score
+    best_move = select_best_move(root)
     return best_move
+
+
+def select_child(node):
+    possible_moves = node.board.get_possible_moves(node.board.current_player)
+    # Check if all children have been visited
+    if len(node.children) == len(possible_moves):
+        # If all children have been visited, select the child with the highest UCB score
+        best_ucb = float("-inf")
+        selected_child = None
+        for child in node.children:
+            ucb = (child.score / child.visits) + math.sqrt(2 * math.log(node.visits) / child.visits)
+            if ucb > best_ucb:
+                best_ucb = ucb
+                selected_child = child
+        if selected_child==None:
+            return node
+        return selected_child  # If no child with valid UCB score is found, return the current node itself
+
+    # If there are unvisited children, randomly select one of them
+    return node
 
 def simulate_random_game(board, max_moves=1000):
     while (not board.check_win_conditions()) and max_moves > 0:
@@ -44,6 +99,18 @@ def simulate_random_game(board, max_moves=1000):
 
     # Return the winner of the game
     return board.get_winner()
+
+def select_best_move(root):
+    # Select the move with the highest average score
+    best_score = float("-inf")
+    best_move = None
+    for child in root.children:
+        average_score = child.score / child.visits if child.visits > 0 else 0
+        print("average score",child.move,average_score)
+        if average_score > best_score:
+            best_score = average_score
+            best_move = child.move
+    return best_move
 
 class Move:
     def __init__(self,start,destiny):
@@ -291,7 +358,7 @@ class Board:
             print("Best move: ",move)
         elif dificulty==2:
             time1 = time.time()
-            move =monte_carlo_search(self, 25)
+            move =monte_carlo_search(self, 100)
             print(type(move))
             print("carlos, mode 2:",move)  
             time2 = time.time() 
@@ -299,7 +366,7 @@ class Board:
             print("Time to calculate the best move: ",delta)
         elif dificulty==3:
             time1 = time.time()
-            move = monte_carlo_search(self, 50)
+            move = monte_carlo_search(self, 200)
             print(move)  
             time2 = time.time() 
             delta= time2-time1
@@ -504,7 +571,6 @@ class Board:
         """
         if self.check_win_conditions():
             if len(self.blue_pieces)==self.blocked_Blue and len(self.red_pieces)==self.blocked_Red:
-                print("draw")
                 return None
             elif len(self.red_pieces)==self.blocked_Red:
                 return draw.BLUE
@@ -571,6 +637,7 @@ def get_col_number(row,sizeofside=5):
         return row+sizeofside
     else:
         return ((3*(sizeofside-1))+1)-row
+    
 def initialize_board(sizeofside=5):
     """
     Initialize the board state with stones placed according to the game rules.
@@ -580,7 +647,6 @@ def initialize_board(sizeofside=5):
     blue_pieces=[]
     Finish_lines=[]
     
-    print(type(board))
     for row in range((sizeofside*2-1)):
         for col in range(get_col_number(row,sizeofside)):
             x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row,sizeofside) * draw.horizontal_distance) / 2
