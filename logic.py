@@ -54,7 +54,6 @@ def monte_carlo_search(board, num_simulations):
                     node.score += 1
                 elif not (result is None):
                     node.score -= 1  # LOSS    
-                    pass
                 node = node.parent
     # Select the move with the highest average score
     best_move = select_best_move(root)
