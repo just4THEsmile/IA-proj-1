@@ -3,6 +3,110 @@ import draw
 import copy
 import time
 import numpy
+import threading
+import random
+class Node:
+    def __init__(self,board, move=None, parent=None):
+        self.board = board  # Board state
+        self.move = move  # Move that led to this node
+        self.parent = parent  # Parent node
+        self.children = []  # Child nodes
+        self.visits = 0  # Number of times this node has been visited
+        self.score = 0  # Accumulated score for this node
+
+def monte_carlo_search(board, num_simulations):
+    root = Node(board)
+    start_time = time.time()
+    timeout = num_simulations / 30
+    print("timeout",timeout)
+
+    while time.time() - start_time < timeout and root.visits < num_simulations:
+
+        node = root
+        moves = node.board.get_possible_moves(node.board.current_player)
+        # Selection phase
+        while len(node.children) == len(moves) and len(moves) > 0:
+            node = select_child(node)
+            if node is None:
+                break
+            moves = node.board.get_possible_moves(node.board.current_player)
+        
+        # Expansion phase
+        if not node.board.check_win_conditions():  # Expand only if the node is not a end state
+            moves = node.board.get_possible_moves(node.board.current_player)
+            if len(moves)>0:
+                new_moves=[move for move in moves if (move not in [child.move for child in node.children] )]
+                move = random.choice(new_moves)
+                new_board = copy.deepcopy(node.board)
+                new_board.change_piece_position(move.start, move.destiny)
+                new_board.check_blocked()
+                new_board.current_player = draw.RED if new_board.current_player == draw.BLUE else draw.BLUE
+                new_node = Node(new_board,move, node)
+                node.children.append(new_node)
+                node = new_node
+        
+            # Simulation phase
+            result = simulate_random_game(copy.deepcopy(node.board),1000)
+            # Backpropagation phase
+            while node:
+                node.visits += 1
+                if result == board.current_player:
+                    node.score += 1
+                elif not (result is None):
+                    node.score -= 1  # LOSS    
+                    pass
+                node = node.parent
+    # Select the move with the highest average score
+    best_move = select_best_move(root)
+    return best_move
+
+
+def select_child(node):
+    possible_moves = node.board.get_possible_moves(node.board.current_player)
+    # Check if all children have been visited
+    if len(node.children) == len(possible_moves):
+        # If all children have been visited, select the child with the highest UCB score
+        best_ucb = float("-inf")
+        selected_child = None
+        for child in node.children:
+            ucb = (child.score / child.visits) + math.sqrt(2 * math.log(node.visits) / child.visits)
+            if ucb > best_ucb:
+                best_ucb = ucb
+                selected_child = child
+        if selected_child==None:
+            return node
+        return selected_child  # If no child with valid UCB score is found, return the current node itself
+
+    # If there are unvisited children, randomly select one of them
+    return node
+
+def simulate_random_game(board, max_moves=1000):
+    while (not board.check_win_conditions()) and max_moves > 0:
+        moves = board.get_possible_moves(board.current_player)
+        if len(moves)>0:
+            random_move = random.choice(moves)
+            board.change_piece_position(random_move.start, random_move.destiny)
+            board.check_blocked()
+            board.current_player = draw.RED if board.current_player == draw.BLUE else draw.BLUE
+        else:
+            # No possible moves, the game is likely to end in a draw
+            return None
+        max_moves -= 1
+
+    # Return the winner of the game
+    return board.get_winner()
+
+def select_best_move(root):
+    # Select the move with the highest average score
+    best_score = float("-inf")
+    best_move = None
+    for child in root.children:
+        average_score = child.score / child.visits if child.visits > 0 else 0
+        print("average score",child.move,average_score)
+        if average_score > best_score:
+            best_score = average_score
+            best_move = child.move
+    return best_move
 
 class Move:
     def __init__(self,start,destiny):
@@ -173,13 +277,13 @@ class Board:
             for piece in self.blue_pieces:
                 if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==get_col_number((self.size-1),self.size)-1:
                     return  float('inf')
-                value -= get_pieces_distance(piece,self.finish_lines[0])
+                value -= get_pieces_distance(piece,self.finish_lines[1])
                 if self.has_friendly_neighbours(piece,draw.BLUE):
                     value+=20
             for piece in self.red_pieces:
                 if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==0:
                     return float('inf')
-                value += get_pieces_distance(piece,self.finish_lines[1])   
+                value += get_pieces_distance(piece,self.finish_lines[0])   
                 if self.has_friendly_neighbours(piece,draw.RED):
                     value-=20
             if len(self.red_pieces)==0 or self.blocked_Red==len(self.red_pieces):
@@ -219,8 +323,6 @@ class Board:
             return min_aval
         
     def find_best_move(self, depth):    
-        print(len(self.red_pieces))
-        print(self.blocked_Red)
         best_move = None
         max_eval = float('-inf')
         alpha = float('-inf')
@@ -234,16 +336,36 @@ class Board:
             if eval > max_eval:
                 max_eval = eval
                 best_move = move
-        print("score",max_eval)        
+        ## monte carlos test     
+        
+        print("color",self.current_player,"score",max_eval,"best move",best_move)        
         return best_move
 
-    def play_best_move(self):
-        time1 = time.time()
-        move = self.find_best_move(4)
-        time2 = time.time()
-        delta= time2-time1
-        print("Time to calculate the best move: ",delta)
-        print("Best move: ",move)
+    def play_best_move(self,dificulty=1):
+        if dificulty==1:
+
+            time1 = time.time()
+            move = self.find_best_move(2)
+            time2 = time.time()
+            delta= time2-time1
+            print("Time to calculate the best move,mode 1: ",delta)
+            print("Best move: ",move)
+        elif dificulty==2:
+            time1 = time.time()
+            move =monte_carlo_search(self, 100)
+            print(type(move))
+            print("carlos, mode 2:",move)  
+            time2 = time.time() 
+            delta= time2-time1
+            print("Time to calculate the best move: ",delta)
+        elif dificulty==3:
+            time1 = time.time()
+            move = monte_carlo_search(self, 200)
+            print(move)  
+            time2 = time.time() 
+            delta= time2-time1
+            print("Time to calculate the best move: ",delta)
+
         self.change_piece_position(move.start,move.destiny)
 
 
@@ -437,23 +559,38 @@ class Board:
         else:
             print("Invalid move")
 
-
+    def get_winner(self):
+        """
+        Get the winner of the game.
+        """
+        if self.check_win_conditions():
+            if len(self.blue_pieces)==self.blocked_Blue and len(self.red_pieces)==self.blocked_Red:
+                return None
+            elif len(self.red_pieces)==self.blocked_Red:
+                return draw.BLUE
+            elif len(self.blue_pieces)==self.blocked_Blue:
+                return draw.RED
+            elif self.check_pos_color(((self.size-1),0),draw.RED)==True:
+                return draw.RED
+            elif self.check_pos_color(((self.size-1),get_col_number((self.size-1),self.size)-1),draw.BLUE)==True:
+                return draw.BLUE
+        return None
 
     def check_win_conditions(self):
         """
         Check win conditions to determine if a player has won or if the game has ended in a stalemate.
         """
         if self.check_pos_color(((self.size-1),0),draw.RED)==True:
-            print("Red wins")
+            #print("Red wins")
             return True
         elif self.check_pos_color(((self.size-1),get_col_number((self.size-1),self.size)-1),draw.BLUE)==True:
-            print("Blue wins")
+            #print("Blue wins")
             return True
         elif len(self.red_pieces)==self.blocked_Red:
-            print("Blue wins")
+            #print("Blue wins")
             return True
         elif len(self.blue_pieces)==self.blocked_Blue:
-            print("Red wins")
+            #print("Red wins")
             return True 
         return False
     
@@ -494,6 +631,7 @@ def get_col_number(row,sizeofside=5):
         return row+sizeofside
     else:
         return ((3*(sizeofside-1))+1)-row
+    
 def initialize_board(sizeofside=5):
     """
     Initialize the board state with stones placed according to the game rules.
@@ -503,7 +641,6 @@ def initialize_board(sizeofside=5):
     blue_pieces=[]
     Finish_lines=[]
     
-    print(type(board))
     for row in range((sizeofside*2-1)):
         for col in range(get_col_number(row,sizeofside)):
             x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row,sizeofside) * draw.horizontal_distance) / 2
