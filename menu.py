@@ -65,6 +65,7 @@ def game_mode_selection(size):
                 pygame.quit()
                 sys.exit()
 
+# to select the difficulty of the bot on the bot vs bot mode
 def difficulty_select_BVB(size):
     menu_options = ["Easy", "Medium", "Hard"]
     menu_height = len(menu_options) * 100
@@ -100,7 +101,7 @@ def difficulty_select_BVB(size):
                 pygame.quit()
                 sys.exit()
 
-
+# Function to handle difficulty selection for player vs bot mode
 def difficulty_select_PVB(size):
     menu_options = ["Easy", "Medium", "Hard"]
     menu_height = len(menu_options) * 100
@@ -134,6 +135,7 @@ def difficulty_select_PVB(size):
                 pygame.quit()
                 sys.exit()
 
+# to select whether the player wants to move first or second
 def first_move_select(size,difficulty):
     menu_options = ["Move First", "Move Second"]
     menu_height = len(menu_options) * 100
