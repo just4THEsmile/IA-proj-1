@@ -35,6 +35,7 @@ def game_mode_selection(size):
     while True:
         WINDOW.fill(BLACK)
         mx, my = pygame.mouse.get_pos()
+        hover = None
 
         for i, option in enumerate(menu_options):
             menu_y_position = start_y + i * 100
@@ -194,6 +195,7 @@ def game_over(winner):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
 
 
 def size_select():

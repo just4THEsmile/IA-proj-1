@@ -63,6 +63,7 @@ def game_pvb(botcolor,size=5,dificulty=1):
         pygame.display.flip()
         if board.check_win_conditions():
                 winner=board.get_winner()
+                time.sleep(1)
                 print("WINEER",winner)
                 return winner 
         elif board.current_player == botcolor:
@@ -75,10 +76,6 @@ def game_pvb(botcolor,size=5,dificulty=1):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif board.check_win_conditions():
-                winner=board.get_winner()
-                print("WINEER",winner)
-                return winner
    
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if (board.selected_piece==None):
@@ -119,6 +116,7 @@ def game_bvb(size=5,dificulty=1):
         board.check_blocked()
         board.draw()
         pygame.display.flip()
+        time.sleep(0.5)
         if board.check_win_conditions():
                 winner=board.get_winner()
                 print("WINEER",winner)
