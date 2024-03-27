@@ -1,13 +1,12 @@
-import main 
 import draw
 import logic
-import math
 import pygame
+import time
    # Initialize the board state
 
 
 
-def game_pvp(size):    
+def game_pvp(size=5):    
     board = logic.Board(size)
     # Main game loop
     running = True
@@ -57,11 +56,11 @@ def game_pvp(size):
 def game_pvb(botcolor,size=5,dificulty=1):
     board = logic.Board(size)
     # Main game loop
-    running = True
-
-    ## test performance
-    
+    running = True    
     while running:
+        board.check_blocked()
+        board.draw()
+        pygame.display.flip()
         if board.check_win_conditions():
                 winner=board.get_winner()
                 print("WINEER",winner)
@@ -107,8 +106,27 @@ def game_pvb(botcolor,size=5,dificulty=1):
                 pass
 
         
+
+
+def game_bvb(size=5,dificulty=1):
+    board = logic.Board(size)
+    # Main game loop
+    running = True
+
+    ## test performance
+    
+    while running:
         board.check_blocked()
         board.draw()
         pygame.display.flip()
-
-    # Quit Pygame
+        if board.check_win_conditions():
+                winner=board.get_winner()
+                print("WINEER",winner)
+                return winner 
+        board.play_best_move(dificulty)
+        if board.current_player==draw.RED:
+            board.current_player=draw.BLUE
+        else:   
+            board.current_player=draw.RED
+        
+        

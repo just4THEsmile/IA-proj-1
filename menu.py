@@ -44,11 +44,17 @@ def game_mode_selection(size):
                     pygame.event.wait()
                     winner=gameloop.game_pvp(size)
                     game_over(winner)
+                    main_menu()
                 elif pygame.mouse.get_pressed()[0] and option == "Human vs Computer":
-                        pygame.event.wait()
-                        print("Human vs Computer")
-                        difficulty_select(size)
-                        main_menu()
+                    pygame.event.wait()
+                    print("Human vs Computer")
+                    difficulty_select_PVB(size)
+                    main_menu()
+                elif pygame.mouse.get_pressed()[0] and option == "Computer vs Computer":
+                    pygame.event.wait()
+                    difficulty_select_BVB(size)
+                    game_over(winner)
+                    main_menu()
             else:
                 draw_text(option, FONT, WHITE, WINDOW, menu_y_position)
 
@@ -58,9 +64,7 @@ def game_mode_selection(size):
                 pygame.quit()
                 sys.exit()
 
-
-
-def difficulty_select(size):
+def difficulty_select_BVB(size):
     menu_options = ["Easy", "Medium", "Hard"]
     menu_height = len(menu_options) * 100
     start_y = (HEIGHT - menu_height) // 2
@@ -73,16 +77,81 @@ def difficulty_select(size):
                 draw_text(option, FONT, GREEN, WINDOW, menu_y_position)
                 if pygame.mouse.get_pressed()[0] and option == "Easy":
                     pygame.event.wait()
-                    winner=gameloop.game_pvb(draw.RED,size,1)
-
+                    winner=gameloop.game_bvb(size,1)
                     game_over(winner)
+                    main_menu()
                 elif pygame.mouse.get_pressed()[0] and option == "Medium":
                     pygame.event.wait()
-                    winner=gameloop.game_pvb(draw.RED,size,2)
+                    winner=gameloop.game_bvb(size,2)
                     game_over(winner)
+                    main_menu()
                 elif pygame.mouse.get_pressed()[0] and option == "Hard":
                     pygame.event.wait()
-                    winner=gameloop.game_pvb(draw.RED,size,3)
+                    winner=gameloop.game_bvb(size,3)
+                    game_over(winner)
+                    main_menu()
+            else:
+                draw_text(option, FONT, WHITE, WINDOW, menu_y_position)
+
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+
+def difficulty_select_PVB(size):
+    menu_options = ["Easy", "Medium", "Hard"]
+    menu_height = len(menu_options) * 100
+    start_y = (HEIGHT - menu_height) // 2
+    while True:
+        WINDOW.fill(BLACK)
+        mx, my = pygame.mouse.get_pos()
+        for i, option in enumerate(menu_options):
+            menu_y_position = start_y + i * 100
+            if 100 < mx < WIDTH - 100 and menu_y_position < my < menu_y_position + 50:
+                draw_text(option, FONT, GREEN, WINDOW, menu_y_position)
+                if pygame.mouse.get_pressed()[0] and option == "Easy":
+                    pygame.event.wait()
+                    first_move_select(size,1)
+
+                    main_menu()
+                elif pygame.mouse.get_pressed()[0] and option == "Medium":
+                    pygame.event.wait()
+                    first_move_select(size,2)
+                    main_menu()
+                elif pygame.mouse.get_pressed()[0] and option == "Hard":
+                    pygame.event.wait()
+                    first_move_select(size,3)
+                    main_menu()
+            else:
+                draw_text(option, FONT, WHITE, WINDOW, menu_y_position)
+
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+def first_move_select(size,difficulty):
+    menu_options = ["Move First", "Move Second"]
+    menu_height = len(menu_options) * 100
+    start_y = (HEIGHT - menu_height) // 2
+    while True:
+        WINDOW.fill(BLACK)
+        mx, my = pygame.mouse.get_pos()
+        for i, option in enumerate(menu_options):
+            menu_y_position = start_y + i * 100
+            if 100 < mx < WIDTH - 100 and menu_y_position < my < menu_y_position + 50:
+                draw_text(option, FONT, GREEN, WINDOW, menu_y_position)
+                if pygame.mouse.get_pressed()[0] and option == "Move First":
+                    pygame.event.wait()
+                    winner=gameloop.game_pvb(draw.RED,size,difficulty)
+
+                    game_over(winner)
+                elif pygame.mouse.get_pressed()[0] and option == "Move Second":
+                    pygame.event.wait()
+                    winner=gameloop.game_pvb(draw.BLUE,size,difficulty)
                     game_over(winner)
             else:
                 draw_text(option, FONT, WHITE, WINDOW, menu_y_position)
@@ -92,6 +161,8 @@ def difficulty_select(size):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
+
 def game_over(winner):
     WINDOW.fill(BLACK)
     print(winner)

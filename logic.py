@@ -13,11 +13,6 @@ class Node:
         self.children = []  # Child nodes
         self.visits = 0  # Number of times this node has been visited
         self.score = 0  # Accumulated score for this node
-class TimeoutException(Exception):
-    pass
-
-def timeout_handler():
-    raise TimeoutException("Timed out")
 
 def monte_carlo_search(board, num_simulations):
     root = Node(board)
@@ -45,6 +40,7 @@ def monte_carlo_search(board, num_simulations):
                 new_board = copy.deepcopy(node.board)
                 new_board.change_piece_position(move.start, move.destiny)
                 new_board.check_blocked()
+                new_board.current_player = draw.RED if new_board.current_player == draw.BLUE else draw.BLUE
                 new_node = Node(new_board,move, node)
                 node.children.append(new_node)
                 node = new_node
@@ -281,13 +277,13 @@ class Board:
             for piece in self.blue_pieces:
                 if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==get_col_number((self.size-1),self.size)-1:
                     return  float('inf')
-                value -= get_pieces_distance(piece,self.finish_lines[0])
+                value -= get_pieces_distance(piece,self.finish_lines[1])
                 if self.has_friendly_neighbours(piece,draw.BLUE):
                     value+=20
             for piece in self.red_pieces:
                 if piece.gameposition[0]==(self.size-1) and  piece.gameposition[1]==0:
                     return float('inf')
-                value += get_pieces_distance(piece,self.finish_lines[1])   
+                value += get_pieces_distance(piece,self.finish_lines[0])   
                 if self.has_friendly_neighbours(piece,draw.RED):
                     value-=20
             if len(self.red_pieces)==0 or self.blocked_Red==len(self.red_pieces):
@@ -327,8 +323,6 @@ class Board:
             return min_aval
         
     def find_best_move(self, depth):    
-        print(len(self.red_pieces))
-        print(self.blocked_Red)
         best_move = None
         max_eval = float('-inf')
         alpha = float('-inf')
@@ -344,7 +338,7 @@ class Board:
                 best_move = move
         ## monte carlos test     
         
-        print("score",max_eval)        
+        print("color",self.current_player,"score",max_eval,"best move",best_move)        
         return best_move
 
     def play_best_move(self,dificulty=1):
