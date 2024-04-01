@@ -5,7 +5,7 @@ import time
    # Initialize the board state
 
 
-
+# gameloop of pvp
 def game_pvp(size=5):    
     board = logic.Board(size)
     # Main game loop
@@ -37,7 +37,6 @@ def game_pvp(size=5):
                         board.selected_piece = None
                     elif(board.selected_piece!=None):
                         print(board.get_gameposition_at_position((x, y)))
-                        print("\n\n\n")
                         board.move_piece(board.get_gameposition_at_position((x, y)))
                     elif(destination==None):
                         print("error destination")
@@ -52,7 +51,7 @@ def game_pvp(size=5):
 
     # Quit Pygame
     pygame.quit()
-
+# gameloop of pvb
 def game_pvb(botcolor,size=5,dificulty=1):
     board = logic.Board(size)
     # Main game loop
@@ -104,7 +103,7 @@ def game_pvb(botcolor,size=5,dificulty=1):
 
         
 
-
+# gameloop of bvb
 def game_bvb(size=5,dificulty=1):
     board = logic.Board(size)
     # Main game loop

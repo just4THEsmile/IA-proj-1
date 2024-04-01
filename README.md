@@ -1,5 +1,5 @@
 # ABOYNE
-Aboyne is a board game for Windows that aims to move the pieces to achieve victory or stop the opponent from advancing by protecting the pieces themselves.
+Aboyne is a board game for Windows that aims to move the pieces to achieve victory or stop the opponent from advancing by protecting the pieces themselves. You can select the size of the board with options of 3x3, 4x4, or 5x5.
 
 ## Game modes
 ### Human vs. Human Mode:
@@ -11,7 +11,7 @@ There is the option to select the difficulty of the bot, adjustable to best suit
 You can choose the size of the board, with options of 3x3, 4x4, or 5x5, allowing you to vary the complexity and length of the game
 
 ### Computer vs. Computer Mode:
-In this mode, two bots play against each other, ideal for strategy analysis. You can select the size of the board with options of 3x3, 4x4, or 5x5.
+In this mode, two bots play against each other, ideal for strategy analysis.
 
 ## Bot Difficulty
 ### The First mode:
