@@ -14,6 +14,7 @@ class Node:
         self.visits = 0  # Number of times this node has been visited
         self.score = 0  # Accumulated score for this node
 
+# implementation of the monte carlo search algorithm
 def monte_carlo_search(board, num_simulations):
     root = Node(board)
     start_time = time.time()
@@ -59,7 +60,7 @@ def monte_carlo_search(board, num_simulations):
     best_move = select_best_move(root)
     return best_move
 
-
+# select the child node with the highest UCB score
 def select_child(node):
     possible_moves = node.board.get_possible_moves(node.board.current_player)
     # Check if all children have been visited
@@ -79,6 +80,7 @@ def select_child(node):
     # If there are unvisited children, randomly select one of them
     return node
 
+# simulate a random game to the end
 def simulate_random_game(board, max_moves=1000):
     while (not board.check_win_conditions()) and max_moves > 0:
         moves = board.get_possible_moves(board.current_player)
@@ -95,6 +97,7 @@ def simulate_random_game(board, max_moves=1000):
     # Return the winner of the game
     return board.get_winner()
 
+# select the move with the highest average score on monte carlo search
 def select_best_move(root):
     # Select the move with the highest average score
     best_score = float("-inf")
@@ -172,6 +175,7 @@ class Board:
             x, y = self.selected_piece.position
             draw.draw_hexagon_border(x, y, draw.hex_size, draw.YELLOW,2)    
 
+    # return whether the piece has friendly neighbours
     def has_friendly_neighbours(self,piece,color):
         if color==draw.BLUE:
             for piece2 in self.blue_pieces:
@@ -184,6 +188,7 @@ class Board:
                     return True
             return False
     
+    # return the possible movements for this piece
     def get_neighbouring_possibilities(self,piece,color):    
         (fromx,fromy,fromz)=coord_to_cube(piece.gameposition,self.size)
         possibilities=numpy.array([])
@@ -234,7 +239,7 @@ class Board:
         return possibilities   
 
                 
-
+    # return the possible movements for this color
     def get_possible_moves(self,color):
         moves=numpy.array([])
         if color==draw.BLUE:
@@ -247,7 +252,7 @@ class Board:
                     moves= numpy.append(moves,self.get_neighbouring_possibilities(piece,color))
         return moves 
     
-    
+    # avail function for the minimax algorithm
     def avail_board(self,color):
         value=0
         if color==draw.RED:
@@ -291,7 +296,7 @@ class Board:
                 return float('-inf')     
         return value
     
-    
+    # minimax implementation with alpha beta pruning
     def minimax(self,beta,alpha,depth,player,maximaxing):
         if depth==0 or self.check_win_conditions():
             return self.avail_board(player)
@@ -320,13 +325,13 @@ class Board:
                     break 
                 
             return min_aval
-        
+    # find best move for minimax algorithm
     def find_best_move(self, depth):    
         best_move = None
         max_eval = float('-inf')
         alpha = float('-inf')
         beta = float('inf')
-        print("possible moves",self.get_possible_moves(self.current_player))
+
         for move in self.get_possible_moves(self.current_player):
             new_board = copy.deepcopy(self)
             new_board.change_piece_position(move.start,move.destiny)
@@ -335,11 +340,12 @@ class Board:
             if eval > max_eval:
                 max_eval = eval
                 best_move = move
-        ## monte carlos test     
+   
         
         print("color",self.current_player,"score",max_eval,"best move",best_move)        
         return best_move
 
+    # return the best move depending on dificulty
     def play_best_move(self,dificulty=1):
         if dificulty==1:
 
@@ -360,7 +366,7 @@ class Board:
         elif dificulty==3:
             time1 = time.time()
             move = monte_carlo_search(self, 200)
-            print(move)  
+            print("carlos, mode 3:",move)   
             time2 = time.time() 
             delta= time2-time1
             print("Time to calculate the best move: ",delta)
@@ -395,12 +401,13 @@ class Board:
                     if piece.gameposition==pos:
                         return True        
         return False
-    
+    # check if the position is valid
     def check_bounds(self,pos):
         if pos[0]<0 or pos[0]>(self.size*2-1) or pos[1]<0 or pos[1]>=get_col_number(pos[0],self.size):
             return False
         return True
     
+    # check if can move to the finishing line
     def check_can_move_finishing_line(self,pos,color):
         if pos[0]==(self.size-1):
             if pos[1]==0 and color==draw.BLUE:
@@ -409,6 +416,7 @@ class Board:
                 return False
             
         return True
+    # remove a piece from the board
     def remove_piece(self,pos):
 
         for piece in self.red_pieces:
@@ -419,7 +427,7 @@ class Board:
             if piece.gameposition==pos:
                 self.blue_pieces= numpy.delete(self.blue_pieces,numpy.where(self.blue_pieces == piece)[0])
                   
-
+    # change piece from start to destination
     def change_piece_position(self,start,destination):
         for piece in self.red_pieces:
             if destination==piece.gameposition:
@@ -437,6 +445,7 @@ class Board:
         piece.gameposition=destination
         piece.position=self.get_position_from_gameposition(destination)
 
+    # blocks the pieces that are close to enemies 
     def check_blocked(self):
         self.blocked_Blue=0
         self.blocked_Red=0
@@ -462,6 +471,7 @@ class Board:
                             piece2.blocked=True
                             self.blocked_Blue+=1    
 
+    # checks if i can move from a position to another 
     def can_move(self,from_pos,to_pos,color,sizeofside=5):
         (fromx,fromy,fromz)=coord_to_cube(from_pos,sizeofside)
 
@@ -529,12 +539,11 @@ class Board:
                     
     
 
-
+    # move a selected piece to destination
     def move_piece(self, destination):
         """
         Move a piece to the specified destination if the move is valid.
         """
-        print("movement")
         if self.check_pos_color(destination,self.selected_piece.color)==True or self.check_bounds(destination)==False or self.check_can_move_finishing_line(destination,self.selected_piece.color)==False:
             return False
         print(coord_to_cube(self.selected_piece.gameposition,self.size),coord_to_cube(destination,self.size))
@@ -542,22 +551,18 @@ class Board:
             print("valid move")
             piece=self.check_pos(destination)
             if piece!=None :
-                print("removing")
+                print("removing piece")
                 self.remove_piece(destination)
             print(self.selected_piece.gameposition)    
             self.change_piece_position(self.selected_piece.gameposition,destination)
             print(self.selected_piece.gameposition)    
-            """
-            self.board[destination] = self.selected_piece
-            self.board[self.selected_piece.gameposition] = None
-            self.board[destination].gameposition = destination
-            self.board[destination].position = self.get_position_from_gameposition(destination)"""
+
             self.selected_piece = None
             self.current_player = draw.RED if self.current_player == draw.BLUE else draw.BLUE
                      
         else:
             print("Invalid move")
-
+    # returns winner color
     def get_winner(self):
         """
         Get the winner of the game.
@@ -574,7 +579,8 @@ class Board:
             elif self.check_pos_color(((self.size-1),get_col_number((self.size-1),self.size)-1),draw.BLUE)==True:
                 return draw.BLUE
         return None
-
+    
+    #check winning conditions 
     def check_win_conditions(self):
         """
         Check win conditions to determine if a player has won or if the game has ended in a stalemate.
@@ -593,6 +599,7 @@ class Board:
             return True 
         return False
     
+    # get the pixel position from the game position
     def get_gameposition_at_position(self, position):
         x = position[0]
         y = position[1]
@@ -602,6 +609,7 @@ class Board:
 
         return (round(row), round(col))
 
+    # get the piece on the pixel position
     def get_piece_at_position(self, position):
         """
         Get the piece at the given position on the board.
@@ -617,6 +625,7 @@ class Board:
                 return piece   
         return None
     
+    # get the pixel position from the game position
     def get_position_from_gameposition(self,gameposition):
         row, col = gameposition
         x = col * draw.horizontal_distance + (draw.WIDTH - get_col_number(row,self.size) * draw.horizontal_distance) / 2
@@ -624,13 +633,14 @@ class Board:
         return (x,y)
     
 
-
+# get the column number from the row
 def get_col_number(row,sizeofside=5):
     if row<sizeofside:
         return row+sizeofside
     else:
         return ((3*(sizeofside-1))+1)-row
     
+# initialize the board with the pieces    
 def initialize_board(sizeofside=5):
     """
     Initialize the board state with stones placed according to the game rules.
@@ -676,7 +686,7 @@ def initialize_board(sizeofside=5):
 
 
 
-
+# check if the piece is a neighbour of another piece
 def is_neighbour(stone1,stone2,sizeofside=5):
     (fromx,fromy)=stone1.gameposition
     (tox,toy)=stone2.gameposition
@@ -698,10 +708,7 @@ def is_neighbour(stone1,stone2,sizeofside=5):
                 return (dy==0 and abs(dx)==1) or (dy==1 and dx==-1)
 
             
-
-
-
-
+# get the piece from game position
 def get_piece_at_position(board, position):
     """
     Get the piece at the given position on the board.
@@ -713,12 +720,7 @@ def get_piece_at_position(board, position):
     return None
 
 
-
-
-
-
-
-
+# get the coordinate from (x,y) to quadratic coordinates (x,y,z)
 def coord_to_cube(pos,sizeofside=5):
     (x,y)=pos
     realsize=sizeofside-1
@@ -735,6 +737,7 @@ def coord_to_cube(pos,sizeofside=5):
 
     return (xx, yy, zz)
 
+# get the coordinate from quadratic coordinates (x,y,z) to (x,y)
 def cube_to_coord(cube,sizeofside=5):
     (x,y,z)=cube
     realsize=sizeofside-1
@@ -747,6 +750,7 @@ def cube_to_coord(cube,sizeofside=5):
 
     return (xx,yy)
 
+# get the distance between two pieces
 def get_pieces_distance(piece1,piece2):
     (fromx,fromy,fromz)=coord_to_cube(piece1.gameposition)
     (tox,toy,toz)=coord_to_cube(piece2.gameposition)
